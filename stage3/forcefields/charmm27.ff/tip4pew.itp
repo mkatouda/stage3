@@ -1,0 +1,56 @@
+;
+; Horn et al. (2004). J. Chem. Phys.120, 9665-9678
+;
+
+;
+; Note the strange order of atoms to make it faster in gromacs.
+;
+[ moleculetype ]
+; molname       nrexcl
+SOL             2
+
+[ atoms ]
+; id    at type res nr  residu name     at name cg nr   charge
+1          OWT4ew      1       SOL      OW     1       0.0
+2          HWT4ew      1       SOL     HW1     1       0.52422
+3          HWT4ew      1       SOL     HW2     1       0.52422
+4          MWT4ew      1       SOL      MW     1      -1.04844
+
+#ifndef FLEXIBLE
+[ settles ]
+; OW    funct   doh        dhh
+1       1       0.09572    0.15139
+#else
+[ bonds ]
+; i     j       funct   length  force.c.
+1       2       1       0.09572 502416.0 0.09572        502416.0
+1       3       1       0.09572 502416.0 0.09572        502416.0
+
+[ angles ]
+; i     j       k       funct   angle   force.c.
+2       1       3       1       104.52  628.02  104.52  628.02
+#endif
+
+[ exclusions ]
+1       2       3       4
+2       1       3       4
+3       1       2       4
+4       1       2       3
+
+; The position of the virtual site is computed as follows:
+;
+;               O
+;
+;               D
+;
+;       H               H
+;
+; const = distance (OD) / [ cos (angle(DOH))    * distance (OH) ]
+;         0.0125 nm     / [ cos (52.26 deg)     * 0.09572 nm    ]
+
+; Vsite pos x4 = x1 + a*(x2-x1) + b*(x3-x1)
+
+[ virtual_sites3 ]
+; Vsite from                    funct   a               b
+4       1       2       3       1       0.106676721     0.106676721
+

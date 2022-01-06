@@ -1,0 +1,80 @@
+#((3.11-3.15061)/3.15061)/((0.25-0.1521)/0.1521) = -0.02
+# 0.60056
+# epsilon = ((sigma * epsilon0) / sigma0)/0.60056
+
+forcefield = GAFF
+solvent = spce
+#charges = sm54a
+
+# Apply these factors to all atoms, if atom specific values are specified below they will be used instead.
+# The sigma_factor is followed by the epsilon_factor
+overallfactors = 0.993 1.17
+
+# epsilon = epsilon0 * f
+# sigma = sigma0 * (1 + 0.02 * (1 - f))
+# type  sigma_factor    epsilon_factor  prev._sigma_factor  prev._epsilon_factor    prev._diff
+c
+c1
+c2
+c3
+ca
+hc
+ha
+hn
+ho
+hs
+hp
+o
+oh
+os
+n
+n1
+n2
+n3
+n4
+na
+nh
+no
+f
+cl
+br
+i
+s2
+sh
+ss
+s4
+s6
+p2
+p3
+p4
+p5
+cc
+cd
+ce
+cf
+cp
+cq
+cu
+cv
+cx
+cy
+h1
+h2
+h3
+h4
+h5
+n
+nb
+nc
+nd
+sx
+sy
+pb
+pc
+pd
+pe
+pf
+px
+py
+
+***

@@ -1,0 +1,14 @@
+integrator      = steep
+emtol           = 0.1
+emstep          = 0.01
+nsteps          = 1000
+energygrps      = system
+
+
+nstlist         = 0
+ns_type         = simple
+rlist           = 0
+coulombtype     = cutoff
+rcoulomb        = 0
+rvdw            = 0
+pbc             = no

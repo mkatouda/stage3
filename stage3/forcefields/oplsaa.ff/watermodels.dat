@@ -1,0 +1,8 @@
+tip4p   TIP4P  TIP 4-point, recommended
+tip4pew TIP4P-Ew  TIP 4-point optimized with Ewald
+tip3p   TIP3P  TIP 3-point
+tip3p-mod TIP3P-MOD TIP 3-point, optimized for solvation free energy
+tip3p-m25 TIP3P-M25 TIP 3-point, optimized for solvation free energy
+tip5p   TIP5P  TIP 5-point
+spc     SPC    simple point charge
+spce    SPC/E  extended simple point charge

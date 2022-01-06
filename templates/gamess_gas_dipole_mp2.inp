@@ -1,0 +1,7 @@
+ $CONTRL MPLEVL=2 ISPHER=1 RUNTYP=FFIELD $END                                   
+ $BASIS GBASIS=ACCT $END                                                        
+ $SCF DIRSCF=.TRUE. $END                                                        
+ $MP2 MP2PRP=.TRUE. $END                                                        
+ $SYSTEM MWORDS=125 $END                                                        
+ $FFCALC OFFDIA=.FALSE. $END
+

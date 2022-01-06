@@ -1,0 +1,70 @@
+#!/bin/tcsh
+
+# This script reads in GAMESS punch file (.dat) and creates
+# RESP and ESP files to be used with the RESP program of Amber.
+# 
+# Usage example: 
+#
+# makeresp test.dat
+#
+# where test.dat is some GAMESS punch file made with 
+set opt=' $ELPOT  IEPOT=1 WHERE=PDC OUTPUT=PUNCH $END'
+# Two files will be produced as a result,
+# test.esp and test.in. These will have to be fed to RESP.
+# resp -i test.in -e test.esp -o test.res
+
+# This script was written by Dmitri G. Fedorov
+# Research Institute for Computational Sciences
+# National Institute of Advanced Industrial Science and Technology
+# Japan
+# Last update: Sep 10, 2008
+
+if($# < 1) then
+   echo Usage: $0 gamess.dat
+   exit 1
+endif
+if(! -e $1) then
+   echo Input file $1 not found.
+   exit 2
+endif
+if(`grep "POTENTIAL COMPUTED FOR" <$1`a == a) then
+   echo Your $1 does not appear to have ESP data.
+   if($1:e == dat || $1:e == DAT) then
+     echo Add the line below to $1:r.inp and rerun.
+     echo $opt
+   else
+     echo "Perhaps, you are specifying a GAMESS output (not punch) file?"
+   endif
+   exit 3
+endif
+
+set esp=$1:r.esp
+set resp=$1:r.in
+
+cat <<END >$resp
+TITLE
+ &cntrl nmol=1, ihfree=1
+ &end
+1.0
+END
+set n=`grep -n "DATA" <$1 | head -1 | cut -d: -f1`
+@ n++
+sed -n -e "$n p" <$1 >>$resp
+set na=`grep "POTENTIAL COMPUTED FOR" <$1 | tail -1`
+set ch=$na[9]
+set na=$na[5]
+echo $ch $na | awk '{ printf "%5d%5d\n",$1,$2 }' >> $resp
+set n=`grep -n "POTENTIAL COMPUTED FOR" <$1 | tail -1 | cut -d: -f1`
+@ n0 = $n + $na
+head -n $n0 <$1 | tail -n $na | awk '{ printf "%5d%5d\n",$2,0 }' >> $resp
+echo 0 | awk '{ printf "\n\n\n\n" }' >> $resp
+#
+set npt=`grep "POINTS NPT=" <$1 | tail -1` 
+set npt=$npt[7]
+echo $na $npt 0 | awk '{ printf "%5d%5d%5d\n",$1,$2,$3 }' > $esp
+head -n $n0 <$1 | tail -n $na | awk -v s=\  '{ printf "%16c%16.7e%16.7e%16.7e\n",s,$3,$4,$5 }' >>$esp 
+set n=`grep -n "POINTS NPT=" <$1 | tail -1 | cut -d: -f1`
+@ n1 = $n + $npt
+head -n $n1 <$1 | tail -n $npt | awk '{ printf "%16.7e%16.7e%16.7e%16.7e\n",$5,$2,$3,$4}' >>$esp
+echo RESP files were created.
+echo Example of usage: resp -i $resp -e $esp -o $1:r.res 

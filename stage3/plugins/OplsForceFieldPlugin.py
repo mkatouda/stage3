@@ -147,7 +147,7 @@ class OplsForceFieldPlugin(ForceFieldPlugin):
             print('A GAFF topology is required to make an OPLS topology.')
             return
 
-        forcefieldsDir = findForceFieldsDir()
+        forcefieldsDir = findForceFieldsDir('oplsaa')
 
         forcefieldFileName = os.path.join(forcefieldsDir, 'oplsaa.ff', 'ffnonbonded.itp')
 
@@ -514,7 +514,7 @@ class OplsForceFieldPlugin(ForceFieldPlugin):
 
                 oplsFile.write(line)
 
-    def genTop(self, output, solvent = None, verbose = False, forcefieldDir = 'oplsaa.ff'):
+    def genTop(self, output, forcefield = 'oplsaa', solvent = None, verbose = False):
         """ Generate a GROMACS topology file. If solvent is specified a line
         is added to include the parameters for that solvent. """
 
@@ -527,9 +527,8 @@ class OplsForceFieldPlugin(ForceFieldPlugin):
 
         shutil.copy(os.path.join(outputDir, ligRestrFile), os.path.join(topologyDir, ligRestrFile))
 
-        forcefieldsDir = findForceFieldsDir()
-
-        #forcefieldDir = 'oplsaa.ff'
+        forcefieldsDir = findForceFieldsDir(forcefield)
+        forcefieldDir = forcefield + '.ff'
 
         if solvent and not os.path.exists(os.path.join(forcefieldsDir, forcefieldDir, solvent + '.itp')):
             if forcefieldsDir == os.path.join(progDir, 'forcefields'):
@@ -619,11 +618,11 @@ class OplsForceFieldPlugin(ForceFieldPlugin):
             l = max(len('Compound') + 3, len(name) + 1)
             compStr = 'Compound'.ljust(l)
             f.write('; %s nmols\n' % compStr)
-            f.write('  %s 1\n' % name.ljust(l))
+            f.write('%s 1\n' % name.ljust(l))
 
         return topologyFileName
 
-    def coordsToTopology(self, output, coordsFile, verbose = False, forcefieldArg = 'oplsaa'):
+    def coordsToTopology(self, output, coordsFile,  forcefield = 'oplsaa', verbose = False):
         """ Generate topology and .gro coordinates from a pdb file.
         The topology is generated using pdb2gmx.
         Return .top file and .gro file """
@@ -645,7 +644,7 @@ class OplsForceFieldPlugin(ForceFieldPlugin):
                         '-o', groFile,
                         '-p', topolFile,
                         '-i', restraintsFile,
-                        '-ff', forcefieldArg,
+                        '-ff', forcefield,
                         '-water', 'none',
                         '-ignh']
 
@@ -674,7 +673,7 @@ class OplsForceFieldPlugin(ForceFieldPlugin):
                                 '-o', groFile,
                                 '-p', topolFile,
                                 '-i', restraintsFile,
-                                '-ff', forcefieldArg,
+                                '-ff', forcefield,
                                 '-water', 'none',
                                 '-ignh']
 
@@ -714,3 +713,11 @@ class OplsForceFieldPlugin(ForceFieldPlugin):
             restraintsFile = None
 
         return topolFile, groFile, restraintsFile
+
+    def finalClean(self, output):
+
+        gmxbk_files = glob('./#*', recursive=True)
+
+        for gmxbk_file in gmxbk_files:
+            if os.path.isfile(gmxbk_file):
+                os.remove(gmxbk_file)

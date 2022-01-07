@@ -171,7 +171,7 @@ class GaffForceFieldPlugin(ForceFieldPlugin):
         self._postGenerateClean(output)
 
 
-    def genTop(self, output, solvent = None, verbose = False, forcefieldDir = 'amber99sb-ildn.ff'):
+    def genTop(self, output, forcefield = 'amber99sb-ildn', solvent = None, verbose = False):
         """ Generate a GROMACS topology file. If solvent is specified a line
         is added to include the parameters for that solvent. """
 
@@ -185,9 +185,8 @@ class GaffForceFieldPlugin(ForceFieldPlugin):
 
         shutil.copy(os.path.join(outputDir, ligRestrFile), os.path.join(topologyDir, ligRestrFile))
 
-        forcefieldsDir = findForceFieldsDir()
-
-        #forcefieldDir = 'amber99sb-ildn.ff'
+        forcefieldsDir = findForceFieldsDir(forcefield)
+        forcefieldDir = forcefield + '.ff'
 
         if solvent and not os.path.exists(os.path.join(forcefieldsDir, forcefieldDir, solvent + '.itp')):
             if forcefieldsDir == os.path.join(progDir, 'forcefields'):
@@ -277,12 +276,12 @@ class GaffForceFieldPlugin(ForceFieldPlugin):
             l = max(len('Compound') + 3, len(name) + 1)
             compStr = 'Compound'.ljust(l)
             f.write('; %s nmols\n' % compStr)
-            f.write('  %s 1\n' % name.ljust(l))
+            f.write('%s 1\n' % name.ljust(l))
 
         return topologyFileName
 
-    def coordsToTopology(self, output, coordsFile, verbose = False, 
-                         forcefieldArg = 'amber99sb-ildn'):
+    def coordsToTopology(self, output, coordsFile, forcefield = 'amber99sb-ildn',
+                         verbose = False):
         """ Generate topology and .gro coordinates from a pdb file.
         The topology is generated using pdb2gmx.
         Return .top file and .gro file """
@@ -304,7 +303,7 @@ class GaffForceFieldPlugin(ForceFieldPlugin):
                         '-o', groFile,
                         '-p', topolFile,
                         '-i', restraintsFile,
-                        '-ff', forcefieldArg,
+                        '-ff', forcefield,
                         '-water', 'none',
                         '-ignh']
 
@@ -333,7 +332,7 @@ class GaffForceFieldPlugin(ForceFieldPlugin):
                                 '-o', groFile,
                                 '-p', topolFile,
                                 '-i', restraintsFile,
-                                '-ff', forcefieldArg,
+                                '-ff', forcefield,
                                 '-water', 'none',
                                 '-ignh']
 
@@ -373,3 +372,17 @@ class GaffForceFieldPlugin(ForceFieldPlugin):
             restraintsFile = None
 
         return topolFile, groFile, restraintsFile
+
+    def finalClean(self, output):
+
+        outputFileBaseName = os.path.basename(output)
+
+        pkl_file = os.path.abspath(outputFileBaseName + '.pkl')
+        if os.path.isfile(pkl_file):
+            os.remove(pkl_file)
+
+        gmxbk_files = glob('./#*', recursive=True)
+
+        for gmxbk_file in gmxbk_files:
+            if os.path.isfile(gmxbk_file):
+                os.remove(gmxbk_file)

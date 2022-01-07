@@ -14,6 +14,7 @@ import os
 import shutil
 import subprocess
 from datetime import datetime
+from glob import glob
 
 from ForceFieldPlugin import ForceFieldPlugin
 from util import getCommandOutput, getGroLigandName, setRtpLigandName, replaceRtfCharges, isInPath, findForceFieldsDir
@@ -207,7 +208,7 @@ class CgenffForceFieldPlugin(ForceFieldPlugin):
         self._postConvert2GromacsClean(output)
 
 
-    def genTop(self, output, solvent = None, verbose = False, forcefieldDir = 'charmm27.ff'):
+    def genTop(self, output, forcefield = 'charmm27', solvent = None, verbose = False):
         """ Generate a GROMACS topology file. If solvent is specified a line
         is added to include the parameters for that solvent. """
 
@@ -221,9 +222,8 @@ class CgenffForceFieldPlugin(ForceFieldPlugin):
 
         shutil.copy(os.path.join(outputDir, ligRestrFile), os.path.join(topologyDir, ligRestrFile))
 
-        forcefieldsDir = findForceFieldsDir()
-
-        #forcefieldDir = 'charmm27.ff'
+        forcefieldsDir = findForceFieldsDir(forcefield)
+        forcefieldDir = forcefield + '.ff'
 
         if solvent and not os.path.exists(os.path.join(forcefieldsDir, forcefieldDir, solvent + '.itp')):
             if forcefieldsDir == os.path.join(progDir, 'forcefields'):
@@ -244,9 +244,9 @@ class CgenffForceFieldPlugin(ForceFieldPlugin):
         os.chdir(topologyDir)
         forcefieldArg = os.path.join('forcefield')
         pdb2gmxCommand = ['gmx'+gmxSuffix, 'pdb2gmx', '-f', output + '.gro', '-o', 'temp.gro',
-                        '-p', topologyFileName, 
-                        #'-i', os.path.join(topologyDir, outputFileBaseName + '_restr.itp'),
-                        '-ff', forcefieldArg]
+                          '-p', topologyFileName,
+                          #'-i', os.path.join(topologyDir, outputFileBaseName + '_restr.itp')
+                          '-ff', forcefieldArg]
 
         if verbose:
             print(' '.join(pdb2gmxCommand))
@@ -318,7 +318,7 @@ class CgenffForceFieldPlugin(ForceFieldPlugin):
                         l = max(len('Compound') + 3, len(name) + 1)
                         compStr = 'Compound'.ljust(l)
                         topFile.write('; %s nmols\n' % compStr)
-                        topFile.write('  %s 1\n' % name.ljust(l))
+                        topFile.write('%s 1\n' % name.ljust(l))
                         break
 
                     elif line.find('[ moleculetype ]') != -1 or line.find('[moleculetype]') != -1:
@@ -378,7 +378,7 @@ class CgenffForceFieldPlugin(ForceFieldPlugin):
 
         return topologyFileName
 
-    def coordsToTopology(self, output, coordsFile, verbose = False, forcefieldArg = 'charmm27'):
+    def coordsToTopology(self, output, coordsFile, forcefield = 'charmm27', verbose = False):
         """ Generate topology and .gro coordinates from a pdb file.
         The topology is generated using pdb2gmx.
         Return .top file and .gro file """
@@ -400,7 +400,7 @@ class CgenffForceFieldPlugin(ForceFieldPlugin):
                         '-o', groFile,
                         '-p', topolFile,
                         '-i', restraintsFile,
-                        '-ff', forcefieldArg,
+                        '-ff', forcefield,
                         '-water', 'none',
                         '-ignh']
 
@@ -429,7 +429,7 @@ class CgenffForceFieldPlugin(ForceFieldPlugin):
                                 '-o', groFile,
                                 '-p', topolFile,
                                 '-i', restraintsFile,
-                                '-ff', forcefieldArg,
+                                '-ff', forcefield,
                                 '-water', 'none',
                                 '-ignh']
 
@@ -480,4 +480,8 @@ class CgenffForceFieldPlugin(ForceFieldPlugin):
         if os.path.isfile(posre_file):
             os.remove(posre_file)
 
+        gmxbk_files = glob('./#*', recursive=True)
 
+        for gmxbk_file in gmxbk_files:
+            if os.path.isfile(gmxbk_file):
+                os.remove(gmxbk_file)

@@ -393,20 +393,21 @@ def getGroLigandName(groFile):
             if nr.isdigit():
                 return name
 
-def findForceFieldsDir():
+def findForceFieldsDir(forcefield):
 
-    progDir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
-
+    forcefieldDir = forcefield + '.ff'
     forcefieldsDir = os.environ.get('GMXLIB') or \
                      os.path.join(os.path.sep, 'usr', 'local', 'gromacs', 'share', 'gromacs' ,'top')
-    if not os.path.exists(forcefieldsDir):
+    if not os.path.exists(os.path.join(forcefieldsDir, forcefieldDir)):
         gmxPath = findPath('gmx'+gmxSuffix)
         print('gmxPath: ', gmxPath, os.path.dirname(gmxPath))
         forcefieldsDir = os.path.join(os.path.dirname(gmxPath), '..', 'share', 'gromacs', 'top')
-        if not os.path.exists(forcefieldsDir):
+        if not os.path.exists(os.path.join(forcefieldsDir, forcefieldDir)):
+            progDir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
             forcefieldsDir = os.path.join(progDir, 'forcefields')
 
     print('forcefieldsDir: ', forcefieldsDir)
+    print('forcefieldDir: ', forcefieldDir)
 
     return forcefieldsDir
 
@@ -2005,7 +2006,7 @@ def runPreMinimization(outputDir, outputFileBaseName, verbose = False):
     templateFileName = os.path.join(templateDir, 'premin_template.mdp')
 
     gromppCommand = ['gmx'+gmxSuffix, 'grompp', '-f', templateFileName, '-p', topologyFileName,
-                     '-c', groFileName, '-r', groFileName, '-o', tprFileName]
+                     '-c', groFileName, '-r', groFileName, '-o', tprFileName, '-maxwarn', '10']
 
     if verbose:
         print('Generating GROMACS input for early energy minimization of molecule')
@@ -2117,7 +2118,8 @@ def solvateSystem(groFile, outputDir, outputFileBaseName, solvent, bufferDist = 
     if os.path.exists('temp.top') and abs(os.path.getmtime('temp.top') - time.time()) < 5:
         shutil.move('temp.top', topologyFileName)
 
-def neutraliseSystem(outputDir, outputFileBaseName, systemNetCharge, verbose = False):
+def neutraliseSystem(outputDir, outputFileBaseName, systemNetCharge, pname = 'NA', nname = 'CL',
+                     verbose = False):
     """ Neutralise a solvated system by adding ions to counter the net charge """
 
     topologyFileName = os.path.join(outputDir, outputFileBaseName + '.top')
@@ -2141,7 +2143,7 @@ def neutraliseSystem(outputDir, outputFileBaseName, systemNetCharge, verbose = F
 
     gromppCommand = ['gmx'+gmxSuffix, 'grompp', '-f', templateFileName, '-c', solvatedFileName,
                      '-r', solvatedFileName, '-p', topologyFileName, '-o', tprFileName,
-                     '-po', os.path.join(outputDir, 'mdout.mdp')]
+                     '-po', os.path.join(outputDir, 'mdout.mdp'), '-maxwarn', '10']
 
     if verbose:
         print('Generating ions')
@@ -2169,9 +2171,9 @@ def neutraliseSystem(outputDir, outputFileBaseName, systemNetCharge, verbose = F
     genionCommand = ['gmx'+gmxSuffix, 'genion', '-s', tprFileName, '-p', topologyFileName, '-o',
     ionisedFileName]
     if systemNetCharge < 0:
-        genionCommand += ['-np', '%d' % abs(round(systemNetCharge))]
+        genionCommand += ['-np', '%d' % abs(round(systemNetCharge)), '-pname', pname]
     else:
-        genionCommand += ['-nn', '%d' % abs(round(systemNetCharge))]
+        genionCommand += ['-nn', '%d' % abs(round(systemNetCharge)), '-nname', nname]
 
     if verbose:
         print(' '.join(genionCommand))

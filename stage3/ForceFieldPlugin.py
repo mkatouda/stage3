@@ -59,7 +59,7 @@ class ForceFieldPlugin():
 
         return None
 
-    def genTop(self, output, solvent = None, verbose = False, forcefieldDir = None):
+    def genTop(self, output, forcefield = None, solvent = None, verbose = False):
         """ Generates the actual topology (.top) file (which in turns includes the general force field
         parameters and the .itp files generated for the molecule and solvents etc). output is the base name
         of the output from STaGE. If a solvent is specified it will be added to the topology file. If
@@ -68,7 +68,7 @@ class ForceFieldPlugin():
 
         return None
 
-    def coordsToTopology(self, output, coordsFile, verbose = False):
+    def coordsToTopology(self, output, coordsFile, forcefield = None, verbose = False):
         """ Generates a topology using GROMACS tools (pdb2gmx) from a coordinate file (.pdb).
         This is used for e.g. generating a topology for a protein in a protein-ligand system.
         output is the base name of the output from STaGE. coordsFile is the pdb file to use

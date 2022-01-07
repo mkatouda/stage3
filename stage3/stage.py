@@ -263,8 +263,17 @@ if __name__ == '__main__':
                                #'timesteps (experimental).')
     parser.add_argument('--forcefields',
                         default = forcefieldsString,
-                        help = 'The force fields to generate parameters for, specified as a '
+                        help = 'Force fields to generate parameters for, specified as a '
                                'comma-separated string without spaces. Default: %s' % forcefieldsString)
+    parser.add_argument('--ffprotein',
+                        default = None,
+                        help = 'Force field of protein.')
+    parser.add_argument('--pname',
+                        default = 'NA',
+                        help = 'Name of the positive counter ion in Solvent. Default: NA')
+    parser.add_argument('--nname',
+                        default = 'CL',
+                        help = 'Name of the negative counter ion in Solvent. Default: CL')
     parser.add_argument('-v', '--verbose',
                         action = 'store_true',
                         help = 'Verbose output.')
@@ -456,6 +465,30 @@ if __name__ == '__main__':
         for converter in converters:
             if not converter.forceFieldName in forcefields:
                 continue
+
+            if args.ffprotein is None:
+                if converter.forceFieldName == 'gaff':
+                    ffprotein = 'amber99sb-ildn'
+                    #ffprotein = 'amber14sb'
+                elif converter.forceFieldName == 'cgenff':
+                    ffprotein = 'charmm27'
+                    #ffprotein = 'charmm36-jul2021'
+            else:
+                if converter.forceFieldName == 'gaff':
+                    if  'amber' in args.ffprotein:
+                        ffprotein = args.ffprotein
+                    else:
+                        ffprotein = 'amber99sb-ildn'
+                        #ffprotein = 'amber14sb'
+                elif converter.forceFieldName == 'cgenff':
+                    if 'charmm' in args.ffprotein:
+                        ffprotein = args.ffprotein
+                    else:
+                        ffprotein = 'charmm27'
+                        #ffprotein = 'charmm36-jul2021'
+            if args.verbose:
+                print(args.ffprotein, 'ffprotein: ', ffprotein)
+
             if args.verbose:
                 print('Generating %s parameters' % converter.forceFieldName)
             try:
@@ -505,7 +538,7 @@ if __name__ == '__main__':
                     print('proteinCoords: ', proteinCoords)
                     if os.path.splitext(proteinCoords)[1].lower() != 'gro':
                         try:
-                            ffProteinTopology, ffProteinCoords, ffProteinPosre = converter.coordsToTopology(outputFile, proteinCoords, args.verbose)
+                            ffProteinTopology, ffProteinCoords, ffProteinPosre = converter.coordsToTopology(outputFile, proteinCoords, ffprotein, args.verbose)
                             shutil.move(ffProteinPosre, ffDir)
                         except Exception:
                             print('Error generating protein topology.')
@@ -527,7 +560,8 @@ if __name__ == '__main__':
                         continue
 
                 try:
-                    ligandTop = converter.genTop(outputFile, args.water, verbose = args.verbose)
+                    ligandTop = converter.genTop(outputFile, ffprotein, args.water,
+                                                 verbose = args.verbose)
                 except Exception:
                     print('Cannot generate topology for %s:' % converter.forceFieldName)
                     traceback.print_exc()
@@ -583,7 +617,8 @@ if __name__ == '__main__':
                         totCharge = netCharge
 
                     if totCharge:
-                        neutraliseSystem(ffDir, outputFileBaseName, totCharge, verbose = args.verbose)
+                        neutraliseSystem(ffDir, outputFileBaseName, totCharge, 
+                                         args.pname, args.nname, verbose = args.verbose)
 
                 try:
                     makeIndexRun(ffDir, outputFileBaseName, verbose = args.verbose)

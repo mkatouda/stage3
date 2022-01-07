@@ -4,8 +4,8 @@ ligand=jz4.mol
 protein=3HTB_protein.pdb
 outbasename=3HTB-jz4-wat
 ff=cgenff #cgenff #gaff
-charge=mmff94 #am1bcc #hf, am1bcc-pol
-ffprotein=charmm27 #charmm36-jul2021 amber99sb-ildn
+charge=am1bcc #am1bcc am1bcc-pol hf 
+ffprotein=charmm27 #charmm27 charmm36-feb2021 amber99sb-ildn
 water=tip3p
 
 export OMP_NUM_THREADS=4

@@ -1852,6 +1852,7 @@ def makeIndexRun(outputDir, outputFileBaseName, verbose = False):
 
     if verbose:
         print('Making index file from %s' % coordsFile)
+        print('indexFileName: ', indexFileName)
 
     # Make new groups:
     # 1) the whole system except the ligand
@@ -1860,7 +1861,7 @@ def makeIndexRun(outputDir, outputFileBaseName, verbose = False):
     # 3) One new group with water and ions (if present) for temp coupling
     if 'ionised' in coordsFile:
         command += '!"Water_and_ions"\n"Water_and_ions"\nq\n'
-    else:
+    elif 'solvated' in coordsFile:
         command += '!"Water"\n"Water"\nq\n'
 
     makeIndexCmd = ['gmx'+gmxSuffix, 'make_ndx', '-f', coordsFile, '-o', indexFileName]
@@ -1881,27 +1882,28 @@ def makeIndexRun(outputDir, outputFileBaseName, verbose = False):
             groupB = 'Water'
 
         # Rename the newly created temp coupling groups to get consistent names.
-        with open(indexFileName) as f:
-            lines = f.readlines()
+        if 'solvated' in coordsFile:
+            with open(indexFileName) as f:
+                lines = f.readlines()
 
-        foundA = False
-        foundB = False
-        for i in reversed(range(len(lines))):
-            line = lines[i]
-            if not foundA and groupA in line:
-                lines[i] = '[ TempCouplingA ]\n'
-                if foundB:
-                    break
-                foundA = True
-            if not foundB and groupB in line:
-                lines[i] = '[ TempCouplingB ]\n'
-                if foundA:
-                    break
-                foundB = True
+                foundA = False
+                foundB = False
+                for i in reversed(range(len(lines))):
+                    line = lines[i]
+                    if not foundA and groupA in line:
+                        lines[i] = '[ TempCouplingA ]\n'
+                        foundA = True
+                        if foundB:
+                            break
+                    elif not foundB and groupB in line:
+                        lines[i] = '[ TempCouplingB ]\n'
+                        foundB = True
+                        if foundA:
+                            break
 
-        with open(indexFileName, 'w') as f:
-            for line in lines:
-                f.write(line)
+            with open(indexFileName, 'w') as f:
+                for line in lines:
+                    f.write(line)
 
     except subprocess.CalledProcessError as e:
         print('Failed running', ' '.join(makeIndexCmd))

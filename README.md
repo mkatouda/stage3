@@ -2,22 +2,26 @@
 
 STaGE3 is the automatic GROMACS Topology Generation tool of organic molecules using the GAFF, OPLS-AA, and CGenFF force fields.  
 STaGE3 is the python 3 port of STaGE (https://gitlab.com/gromacs/stage).  
-STaGE is a tool for generating GROMACS topologies of small molecules for different force fields (currently GAFF, OPLS-AA and CGenFF). It uses many external programs to perform its tasks, so make sure you read the documentation to properly cite the programs if you use STaGE in a publication and also cite: Lundborg M., Lindahl E. Automatic GROMACS Topology
-Generation and Comparisons of Force Fields for Solvation Free Energy Calculations. J. Phys. Chem. B. 2014, DOI: 10.1021/jp505332p
+If you use STaGE3, please cite original paper: Lundborg M., Lindahl E. Automatic GROMACS TopologyGeneration and Comparisons of 
+Force Fields for Solvation Free Energy Calculations. J. Phys. Chem. B. 2014, DOI: 10.1021/jp505332p
 
+## Licence
+GNU GPLv3
 
 ## Required software
 
 STaGE3 also depends on a number of other softwares, some of which can should be installed seperately.  
 They are:  
+- Required  
 1. Antechamber (part of Ambertools, available after filling in form at http://ambermd.org/AmberTools-get.html )  
 2. acpype (https://alanwilter.github.io/acpype/)
 3. MATCH (available after filling in form at http://brooks.chem.lsa.umich.edu/index.php?page=registerSoftware&subdir=articles/resources/software&link=%3Ca%20href=%22downloads/MATCH_RELEASE.tar.gz%22%3EVersion%201.000%3C/a%3E&name=MATCH ) 
 4. openbabel (http://openbabel.org/wiki/Main_Page)  
-5. Amsol (available after filling in form at http://t1.chem.umn.edu/license/form-user.html )  
-6. gromacs (https://www.gromacs.org/) 
-7. Gaussian16 (https://gaussian.com/gaussian16/)  
-8. GAMESS/US (http://www.msg.ameslab.gov/gamess/License_Agreement.html)  
+5. gromacs (https://www.gromacs.org/) 
+- Optional  
+6. Amsol (available after filling in form at http://t1.chem.umn.edu/license/form-user.html )  
+7. GAMESS/US (http://www.msg.ameslab.gov/gamess/License_Agreement.html)  
+8. Gaussian16 (https://gaussian.com/gaussian16/)  
 
 ## Installation (Required)
 
@@ -119,9 +123,6 @@ TIP3P water model is used and the system is neutralized adding charged counter i
 <pre>
 /path/to/stage.py -i ligand.mol -c protein.pdb -o protein_ligand_solvated --forcefields cgenff -q am1bcc --ffprotein charmm27 -w tip3p -b cubic -d 1.0 --pname K --nname CL
 </pre>
-
-## Licence
-GNU GPLv3
 
 ## Author
 Michio Katouda (katouda@rist.or.jp)  

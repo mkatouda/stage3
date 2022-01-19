@@ -79,7 +79,8 @@ elif [ ${system,,} = 'flow-cx' ]; then
     . ${GMX_BIN}/GMXRC.bash
 elif [ ${system,,} = 'flow-cloud' ]; then
     module load gcc/8.4.0
-    . ${HOME}/data/bin/x86_64/gromacs/2021.1/gcc/bin/GMXRC.bash
+    GMX_BIN=${HOME}/data/bin/x86_64/gromacs/2021.4/gcc/bin
+    . ${GMX_BIN}/GMXRC.bash
 else
     GMX_BIN=${HOME}/gromacs/2021.4/bin
     . ${GMX_BIN}/GMXRC.bash

@@ -112,7 +112,7 @@ elif [ ${system,,} = 'flow-cx' ]; then
     NUM_THREADS=10
 elif [ ${system,,} = 'flow-cloud' ]; then
     module load gcc/8.4.0
-    GMX_BIN=${HOME}/data/bin/x86_64/gromacs/2021.1/gcc/bin
+    GMX_BIN=${HOME}/data/bin/x86_64/gromacs/2021.4/gcc/bin
     . ${GMX_BIN}/GMXRC.bash
     quesystem=pjm
     MPI_lib=OpenMPI
@@ -202,7 +202,7 @@ gmx_run_md() {
 	    ${GMX_CMD} grompp -f ${mdp} -c ${conf} -r ${restraint} -p ${top} -o ${tpr} -maxwarn ${maxwarn}
 	fi
 	if [ ${USE_GPU,,} = 'true' ]; then
-	    ${GMX_CMD} mdrun -ntmpi ${NUM_PROCS} -ntomp ${NUM_THREADS} -rdd ${rdd} -nb gpu -gpu_id ${GPU_ID} -deffnm ${tpr%.*}
+	    ${GMX_CMD} mdrun -ntmpi ${NUM_PROCS} -ntomp ${NUM_THREADS} -nb gpu -gpu_id ${GPU_ID} -deffnm ${tpr%.*}
 	else
 	    ${GMX_CMD} mdrun -ntmpi ${NUM_PROCS} -ntomp ${NUM_THREADS} -deffnm ${tpr%.*}
 	fi
@@ -233,7 +233,7 @@ gmx_run_md_restart() {
 	    ${GMX_CMD} grompp -f ${mdp} -c ${conf} -r ${restraint} -t ${cpt} -p ${top} -o ${tpr} -maxwarn ${maxwarn}
 	fi
 	if [ ${USE_GPU,,} = 'true' ]; then
-	    ${GMX_CMD} mdrun -ntmpi ${NUM_PROCS} -ntomp ${NUM_THREADS} -rdd ${rdd} -nb gpu -gpu_id ${GPU_ID} -deffnm ${tpr%.*}
+	    ${GMX_CMD} mdrun -ntmpi ${NUM_PROCS} -ntomp ${NUM_THREADS} -nb gpu -gpu_id ${GPU_ID} -deffnm ${tpr%.*}
 	else
 	    ${GMX_CMD} mdrun -ntmpi ${NUM_PROCS} -ntomp ${NUM_THREADS} -deffnm ${tpr%.*}
 	fi
@@ -246,28 +246,110 @@ gmx_rerun_md() {
     local restraint=$3
     local cpt=$4
     local tpr=$5
+    local xtc=$6
     if [ -n "${MPIRUN}" ]; then
 	if [ -f ${ndx} ]; then
 	    ${MPIRUN} -n ${NUM_PROCS} ${GMX_CMD} grompp -f ${mdp} -c ${conf} -r ${restraint} -t ${cpt} -p ${top} -n ${ndx} -o ${tpr} -maxwarn ${maxwarn}
 	else
 	    ${MPIRUN} -n ${NUM_PROCS} ${GMX_CMD} grompp -f ${mdp} -c ${conf} -r ${restraint} -t ${cpt} -p ${top} -o ${tpr} -maxwarn ${maxwarn}
 	fi
-	if [ ${USE_GPU,,} = 'true' ]; then
-	    ${MPIRUN} -n ${NUM_PROCS} ${GMX_CMD} mdrun -ntomp ${NUM_THREADS} -rdd ${rdd} -nb gpu -gpu_id ${GPU_ID} -deffnm ${tpr%.*} -rerun
-	elif [ ${NUM_PROCS} -gt 1 ]; then
-	    ${MPIRUN} -n ${NUM_PROCS} ${GMX_CMD} mdrun -ntomp ${NUM_THREADS} -rdd ${rdd} -deffnm ${tpr%.*} -rerun
-	fi
+	${MPIRUN} -n ${NUM_PROCS} ${GMX_CMD} mdrun -ntomp ${NUM_THREADS} -rdd ${rdd} -deffnm ${tpr%.*} -rerun ${xtc}
     else
 	if [ -f ${ndx} ]; then
 	    ${GMX_CMD} grompp -f ${mdp} -c ${conf} -r ${restraint} -t ${cpt} -p ${top} -n ${ndx} -o ${tpr} -maxwarn ${maxwarn}
 	else
 	    ${GMX_CMD} grompp -f ${mdp} -c ${conf} -r ${restraint} -t ${cpt} -p ${top} -o ${tpr} -maxwarn ${maxwarn}
 	fi
-	if [ ${USE_GPU,,} = 'true' ]; then
-	    ${GMX_CMD} mdrun -ntmpi ${NUM_PROCS} -ntomp ${NUM_THREADS} -rdd ${rdd} -nb gpu -gpu_id ${GPU_ID} -deffnm ${tpr%.*} -rerun
-	else
-	    ${GMX_CMD} mdrun -ntmpi ${NUM_PROCS} -ntomp ${NUM_THREADS} -deffnm ${tpr%.*} -rerun
-	fi
+	${GMX_CMD} mdrun -ntmpi ${NUM_PROCS} -ntomp ${NUM_THREADS} -deffnm ${tpr%.*} -rerun ${xtc}
+    fi
+}
+
+gmx_energy_intr() {
+    local edr=$1
+    local xvg_comp=$2
+    local xvg_sum=$3
+    if [ -n "${MPIRUN}" ]; then
+	${MPIRUN} -n ${NUM_PROCS} ${GMX_CMD} energy -f ${edr} -o ${xvg_comp} <<EOF
+Coul-SR:Protein-LIG
+LJ-SR:Protein-LIG
+0
+EOF
+	${MPIRUN} -n ${NUM_PROCS} ${GMX_CMD} energy -f ${edr} -o ${xvg_sum} -sum <<EOF
+Coul-SR:Protein-LIG
+LJ-SR:Protein-LIG
+0
+EOF
+    else
+	${GMX_CMD} energy -f ${edr} -o ${xvg_comp} <<EOF
+Coul-SR:Protein-LIG
+LJ-SR:Protein-LIG
+0
+EOF
+	${GMX_CMD} energy -f ${edr} -o ${xvg_sum} -sum <<EOF
+Coul-SR:Protein-LIG
+LJ-SR:Protein-LIG
+0
+EOF
+    fi
+}
+
+gmx_trjconv() {
+    local tpr=$1
+    local xtc=$2
+    local xtc_center=${xtc%.*}_center.xtc
+    local xtc_fit=${xtc%.*}_fit.xtc
+    local xtc_fit_nowat=${xtc%.*}_fit_nowat.xtc
+    #local gro_center_start=${xtc%.*}_center_start_nowat.pdb
+    local gro_fit_nowat_start=${xtc%.*}_fit_nowat_start.gro
+    if [ -n "${MPIRUN}" ]; then
+	${MPIRUN} -n ${NUM_PROCS} ${GMX_CMD} trjconv -s ${tpr} -f ${xtc} -o ${xtc_center} -center -pbc mol -ur compact <<EOF
+Protein
+System
+EOF
+        #${MPIRUN} -n ${NUM_PROCS} ${GMX_CMD} trjconv -s ${tpr} -f ${xtc_center} -o ${gro_center_start} -dump 0
+        ${MPIRUN} -n ${NUM_PROCS} ${GMX_CMD} trjconv -s ${tpr} -f ${xtc_center} -o ${xtc_fit} -fit rot+trans <<EOF
+Backbone
+System
+EOF
+        ${MPIRUN} -n ${NUM_PROCS} ${GMX_CMD} trjconv -s ${tpr} -f ${xtc_center} -n ${ndx} -o ${gro_fit_nowat_start} -dump 0 <<EOF
+TempCouplingA
+EOF
+        ${MPIRUN} -n ${NUM_PROCS} ${GMX_CMD} trjconv -s ${tpr} -f ${xtc_fit} -n ${ndx} -o ${xtc_fit_nowat} <<EOF
+TempCouplingA
+EOF
+    else
+	${GMX_CMD} trjconv -s ${tpr} -f ${xtc} -o ${xtc_center} -center -pbc mol -ur compact <<EOF
+Protein
+System
+EOF
+        #${GMX_CMD} trjconv -s ${tpr} -f ${xtc_center} -o ${gro_center_start} -dump 0
+        ${GMX_CMD} trjconv -s ${tpr} -f ${xtc_center} -o ${xtc_fit} -fit rot+trans <<EOF
+Backbone
+System
+EOF
+        ${GMX_CMD} trjconv -s ${tpr} -f ${xtc_center} -n ${ndx} -o ${gro_fit_nowat_start} -dump 0 <<EOF
+TempCouplingA
+EOF
+        ${GMX_CMD} trjconv -s ${tpr} -f ${xtc_fit} -n ${ndx} -o ${xtc_fit_nowat} <<EOF
+TempCouplingA
+EOF
+    fi
+}
+
+gmx_rms() {
+    local tpr=$1
+    local xtc=$2
+    local xvg=$3
+    if [ -n "${MPIRUN}" ]; then
+	${MPIRUN} -n ${NUM_PROCS} ${GMX_CMD} rms -s ${tpr} -f ${xtc} -n ${ndx} -o ${xvg} -tu ns <<EOF
+Backbone
+2
+EOF
+    else
+	${GMX_CMD} rms -s ${tpr} -f ${xtc} -n ${ndx} -o ${xvg} -tu ns <<EOF
+Backbone
+2
+EOF
     fi
 }
 
@@ -285,19 +367,20 @@ else
 fi
 
 gmx_run_md ${mdppath}/em.mdp ${gro} ${gro} em.tpr
-#echo "10 0"| ${GMX_CMD} energy -f em.edr -o potential.xvg
 
 gmx_run_md ${mdppath}/nvt.mdp em.gro em.gro nvt.tpr
 
-#echo "16 0" | ${GMX_CMD} energy -f nvt.edr -o temperature.xvg
-
 gmx_run_md_restart ${mdppath}/npt.mdp nvt.gro nvt.gro nvt.cpt npt.tpr
-#echo "18 0" | ${GMX_CMD} energy -f npt.edr -o pressure.xvg
-#echo "24 0" | ${GMX_CMD} energy -f npt.edr -o density.xvg
 
 gmx_run_md_restart ${mdppath}/md.mdp npt.gro npt.gro npt.cpt md_0_10.tpr
 
 gmx_rerun_md ${mdppath}/ie.mdp npt.gro npt.gro npt.cpt ie.tpr md_0_10.xtc
+
+gmx_energy_intr ie.edr md_0_10_interaction_energy_component.xvg md_0_10_interaction_energy_sum.xvg
+
+gmx_trjconv md_0_10.tpr md_0_10.xtc
+
+gmx_rms md_0_10.tpr md_0_10_center.xtc md_0_10_ligand_rmsd.xvg
 
 cd ../
 

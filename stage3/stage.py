@@ -212,11 +212,17 @@ if __name__ == '__main__':
                                'If you need to assign parameters to e.g. co-factors '
                                'it is good to keep their names to tell them apart '
                                'from ligands.')
+    parser.add_argument('-b', '--box_type',
+                        default = 'dodecahedron',
+                        help = 'Buffer from the solute to the edge of the '
+                               'dodecahedron shaped solvent box. Set to 0 '
+                               'to disable solvation (and ionisation).\n'
+                               'Default: dodecahedron')
     parser.add_argument('-d', '--box_buffer',
                         type = float,
                         default = 1.0,
                         help = 'Buffer from the solute to the edge of the '
-                               'dodecahedron shaped solvent box. Set to 0 '
+                               'solvent box. Set to 0 '
                                'to disable solvation (and ionisation).\n'
                                'Default: 1.0')
     parser.add_argument('-w', '--water',
@@ -611,7 +617,7 @@ if __name__ == '__main__':
                 if args.water:
                     if args.box_buffer > 0:
                         solvateSystem(ffSpecificCoords or ligandCoords, ffDir, outputFileBaseName, args.water,
-                        args.box_buffer, verbose = args.verbose)
+                        args.box_type, args.box_buffer, verbose = args.verbose)
 
                     if totCharge == None:
                         totCharge = netCharge

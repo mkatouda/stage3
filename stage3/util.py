@@ -2049,9 +2049,12 @@ def runPreMinimization(outputDir, outputFileBaseName, verbose = False):
 
     os.chdir(currDir)
 
-def solvateSystem(groFile, outputDir, outputFileBaseName, solvent, bufferDist = 1.0, verbose = False):
-    """ Solvate the system in a dodecahedron "box" of the specified solvent. The minimum distance from
-    molecules in the system to the edges of the "box" is specified by bufferDist (default 1.0 nm). """
+def solvateSystem(groFile, outputDir, outputFileBaseName, solvent, boxType = 'dodecahedron', 
+                  bufferDist = 1.0, verbose = False):
+    """ Solvate the system in a "box" of the specified solvent. The box shape is specified by boxType
+    (default dodecahedron).
+    The minimum distance from molecules in the system to the edges of the "box" is specified by bufferDist
+    (default 1.0 nm). """
 
     topologyFileName = os.path.join(outputDir, outputFileBaseName + '.top')
 
@@ -2059,7 +2062,7 @@ def solvateSystem(groFile, outputDir, outputFileBaseName, solvent, bufferDist = 
     solvatedFileName = os.path.join(outputDir, 'solvated.gro')
 
     editConfCommand = ['gmx'+gmxSuffix, 'editconf', '-f', groFile, '-o', boxFileName,
-    '-bt', 'dodecahedron', '-d', '%.2f' % bufferDist]
+    '-bt', boxType, '-d', '%.2f' % bufferDist]
 
     if verbose:
         print('Preparing solvent box')
@@ -2084,7 +2087,7 @@ def solvateSystem(groFile, outputDir, outputFileBaseName, solvent, bufferDist = 
     else:
         solventFile = 'spc216.gro'
 
-    genboxCommand = ['gmx'+gmxSuffix, 'genbox', '-cp', boxFileName, '-cs', solventFile,
+    genboxCommand = ['gmx'+gmxSuffix, 'solvate', '-cp', boxFileName, '-cs', solventFile,
     '-o', solvatedFileName, '-p', topologyFileName]
 
     if verbose:
@@ -2095,12 +2098,12 @@ def solvateSystem(groFile, outputDir, outputFileBaseName, solvent, bufferDist = 
         if verbose:
             print(result)
 
-        # If there was no output try the gromacs 5.0 way of solvating
-        if not os.path.exists(solvatedFileName) or 'This tool has been removed from Gromacs 5.0' in result:
+        # If there was no output try the gromacs 4.x way of solvating
+        if not os.path.exists(solvatedFileName) or 'This tool is not avaiable before Gromacs 5.0' in result:
             if verbose:
-                print("No output from genbox, trying 'gmx solvate' instead.")
-            genboxCommand = ['gmx'+gmxSuffix, 'solvate', '-cp', boxFileName, '-cs', solventFile,
-            '-o', solvatedFileName, '-p', topologyFileName]
+                print("No output from genbox, trying 'gmx genbox' instead.")
+            genboxCommand = ['gmx'+gmxSuffix, 'genbox', '-cp', boxFileName, '-cs', solventFile,
+                             '-o', solvatedFileName, '-p', topologyFileName]
             result = getCommandOutput(genboxCommand)
             if verbose:
                 print(result)

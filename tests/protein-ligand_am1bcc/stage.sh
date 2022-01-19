@@ -44,8 +44,8 @@ pname=NA
 nname=CL
 rdd=1
 maxwarn=10
-mdppath=${HOME}/data/work/kyoto_pro-lig_md_2021q4/stage3/templates
-#mdppath=../mdp
+#mdppath=${HOME}/data/work/kyoto_pro-lig_md_2021q4/stage3/templates
+mdppath=../mdp
 
 # computing system settings
 system=flow-cx
@@ -106,13 +106,13 @@ python ${stage3path}/stage.py -i ${ligand} -o ${outbasename} --forcefields ${ff_
 conda deactivate
 
 cd ${outbasename}_${ff_ligand}
-if [ -e solvated_ionised.gro ]:
+if [ -e solvated_ionised.gro ]; then
     gro=solvated_ionised.gro
-elif [ -e solvated.gro ]:
+elif [ -e solvated.gro ]; then
     gro=solvated.gro
 else
     gro=${outbasebame}.gro
 fi
-${GMX_CMD} grompp -f ${mdppath}/minim.mdp -c ${gro} -r ${gro} -p ${outbasename}.top -o min.tpr -po mdout.mdp -maxwarn ${maxwarn}
+${GMX_CMD} grompp -f ${mdppath}/em.mdp -c ${gro} -r ${gro} -p ${outbasename}.top -o min.tpr -po mdout.mdp -maxwarn ${maxwarn}
 cd ../
 

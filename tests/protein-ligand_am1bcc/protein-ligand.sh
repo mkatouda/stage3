@@ -26,7 +26,7 @@
 # PJM -L node=1
 # PJM --mpi proc=20
 # Common settings
-#PJM -L elapse=0:15:00
+#PJM -L elapse=1:00:00
 #PJM -j
 #PJM -S
 
@@ -48,12 +48,12 @@ maxwarn=10
 mdppath=../mdp
 
 # computing system settings
-system=flow-cx
+system=flow-cx # flow-fx flow-cloud ito-a ito-b
 conda_venv=py38-shortmd
-#quesystem=pjm
-#USE_GPU=true
-#GPU_ID="0"
-#MPI_lib=none #OpenMPI
+quesystem=none
+USE_GPU=false
+GPU_ID="0"
+MPI_lib=none #intel OpenMPI
 NUM_NODES=1
 NUM_CORES=4
 NUM_THREADS=4
@@ -61,13 +61,18 @@ LANG=C
 
 # software envieonment settings
 # Groamcs settings
-GMX_CMD=gmx_mpi
+GMX_CMD=gmx
+GMX_BIN=${HOME}/data/gromacs-2021.4/bin
 export GMXLIB=${HOME}/data/param/gromacs/top
+
+# computing system dependent settings
 
 if [ ${system,,} = 'ito-a' ]; then
     module load gcc/6.3.0
     . /home/app/intel/intel2018_up3/bin/compilervars.sh intel64
-    . /home/app/gromacs/2020.6/cpu/bin/GMXRC.bash
+    GMX_CMD=gmx_mpi
+    GMX_BIN=/home/app/gromacs/2020.6/cpu/bin
+    . ${GMX_BIN}/GMXRC.bash
     module load g16/a03
     export PATH=${PATH}:/home/app/a/GAMESS-20170420
     quesystem=pjm
@@ -77,10 +82,11 @@ if [ ${system,,} = 'ito-a' ]; then
     NUM_CORES=36
     NUM_THREADS=36
 elif [ ${system,,} = 'ito-b' ]; then
-    module load gcc/6.3.0
+    module load gcc/6.3.0 cuda/9.1
     . /home/app/intel/intel2018_up3/bin/compilervars.sh intel64
-    . /home/app/gromacs/2020.6/gpu/bin/GMXRC.bash
+    GMX_BIN=/home/app/gromacs/2020.6/gpu/bin
     GMX_CMD=gmx_mpi
+    . ${GMX_BIN}/GMXRC.bash
     module load g16/a03
     export PATH=${PATH}:/home/app/a/GAMESS-20170420
     quesystem=pjm
@@ -92,6 +98,7 @@ elif [ ${system,,} = 'ito-b' ]; then
 elif [ ${system,,} = 'flow-fx' ]; then
     module load fftw/3.3.9-tune
     module load gromacs/2021.2
+    GMX_CMD=gmx_mpi
     quesystem=pjm
     MPI_lib=tcs
     USE_GPU=false
@@ -100,9 +107,9 @@ elif [ ${system,,} = 'flow-fx' ]; then
     NUM_THREADS=10
 elif [ ${system,,} = 'flow-cx' ]; then
     module load gcc/8.4.0 cuda/11.2.1 openmpi_cuda/4.0.4 nccl/2.8.4
+    GMX_CMD=gmx
     GMX_BIN=${HOME}/data/bin/x86_64/gromacs/2021.4/gpu/gcc/bin
     . ${GMX_BIN}/GMXRC.bash
-    GMX_CMD=gmx
     quesystem=pjm
     MPI_lib=none
     USE_GPU=true
@@ -112,6 +119,7 @@ elif [ ${system,,} = 'flow-cx' ]; then
     NUM_THREADS=10
 elif [ ${system,,} = 'flow-cloud' ]; then
     module load gcc/8.4.0
+    GMX_CMD=gmx
     GMX_BIN=${HOME}/data/bin/x86_64/gromacs/2021.4/gcc/bin
     . ${GMX_BIN}/GMXRC.bash
     quesystem=pjm
@@ -121,7 +129,6 @@ elif [ ${system,,} = 'flow-cloud' ]; then
     NUM_CORES=20
     NUM_THREADS=20
 else
-    GMX_BIN=${HOME}/gromacs/2021.4/bin
     . ${GMX_BIN}/GMXRC.bash
 fi
 

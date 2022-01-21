@@ -7,8 +7,7 @@
 # PJM -L vnode-core=36
 # ITO-B
 # PJM -L rscunit=ito-b
-# PJM -L rscgrp=ito-g-4
-# PJM -L rscgrp=ito-g-4-dbg
+# PJM -L rscgrp=ito-g-1
 # PJM -L vnode=1
 # PJM -L vnode-core=36
 # Flow-fx
@@ -93,8 +92,8 @@ elif [ ${system,,} = 'ito-b' ]; then
     USE_GPU=true
     GPU_ID="0"
     NUM_NODES=1
-    NUM_CORES=36
-    NUM_THREADS=36
+    NUM_CORES=9
+    NUM_THREADS=9
 elif [ ${system,,} = 'flow-fx' ]; then
     module load fftw/3.3.9-tune
     module load gromacs/2021.2

@@ -48,7 +48,7 @@ maxwarn=10
 mdppath=../mdp
 
 # computing system settings
-system=flow-cx
+system=flow-cx # flow-fx flow-cloud ito-a ito-b
 conda_venv=py38-shortmd
 export OMP_NUM_THREADS=4
 LANG=C
@@ -56,33 +56,41 @@ LANG=C
 # software envieonment settings
 # Groamcs settings
 GMX_CMD=gmx_mpi
+GMX_BIN=${HOME}/gromacs-2021.4/bin
 export GMXLIB=${HOME}/data/param/gromacs/top
 
+# computing system dependent settings
 if [ ${system,,} = 'ito-a' ]; then
     module load gcc/6.3.0
     . /home/app/intel/intel2018_up3/bin/compilervars.sh intel64
-    . /home/app/gromacs/2020.6/cpu/bin/GMXRC.bash
+    GMX_CMD=gmx_mpi
+    GMX_BIN=/home/app/gromacs/2020.6/cpu/bin
+    . ${GMX_BIN}/GMXRC.bash
     module load g16/a03
     export PATH=${PATH}:/home/app/a/GAMESS-20170420
 elif [ ${system,,} = 'ito-b' ]; then
-    module load gcc/6.3.0
+    module load gcc/6.3.0 cuda/9.1
     . /home/app/intel/intel2018_up3/bin/compilervars.sh intel64
-    . /home/app/gromacs/2020.6/gpu/bin/GMXRC.bash
+    GMX_CMD=gmx_mpi
+    GMX_BIN=/home/app/gromacs/2020.6/gpu/bin
+    . ${GMX_BIN}/GMXRC.bash
     module load g16/a03
     export PATH=${PATH}:/home/app/a/GAMESS-20170420
 elif [ ${system,,} = 'flow-fx' ]; then
     module load fftw/3.3.9-tune
     module load gromacs/2021.2
+    GMX_CMD=gmx_mpi
 elif [ ${system,,} = 'flow-cx' ]; then
     module load gcc/8.4.0 cuda/11.2.1 openmpi_cuda/4.0.4 nccl/2.8.4
+    GMX_CMD=gmx
     GMX_BIN=${HOME}/data/bin/x86_64/gromacs/2021.4/gpu/gcc/bin
     . ${GMX_BIN}/GMXRC.bash
 elif [ ${system,,} = 'flow-cloud' ]; then
     module load gcc/8.4.0
+    GMX_CMD=gmx
     GMX_BIN=${HOME}/data/bin/x86_64/gromacs/2021.4/gcc/bin
     . ${GMX_BIN}/GMXRC.bash
 else
-    GMX_BIN=${HOME}/gromacs/2021.4/bin
     . ${GMX_BIN}/GMXRC.bash
 fi
 

@@ -369,7 +369,7 @@ if [ -e solvated_ionised.gro ]; then
 elif [ -e solvated.gro ]; then
     gro=solvated.gro
 else
-    gro=${outbasebame}.gro
+    gro=${outbasename}.gro
 fi
 
 gmx_run_md ${mdppath}/em.mdp ${gro} ${gro} em.tpr

@@ -48,7 +48,7 @@ mdppath=../mdp
 
 # computing system settings
 system=flow-cx # flow-fx flow-cloud ito-a ito-b
-conda_venv=py38-shortmd
+conda_venv=py38-chemts-md
 quesystem=none
 USE_GPU=false
 GPU_ID="0"
@@ -349,12 +349,12 @@ gmx_rms() {
     if [ -n "${MPIRUN}" ]; then
 	${MPIRUN} -n ${NUM_PROCS} ${GMX_CMD} rms -s ${tpr} -f ${xtc} -n ${ndx} -o ${xvg} -tu ns <<EOF
 Backbone
-2
+LIG_Heavy
 EOF
     else
 	${GMX_CMD} rms -s ${tpr} -f ${xtc} -n ${ndx} -o ${xvg} -tu ns <<EOF
 Backbone
-2
+LIG_Heavy
 EOF
     fi
 }
@@ -387,6 +387,12 @@ gmx_energy_intr ie.edr md_0_10_interaction_energy_component.xvg md_0_10_interact
 gmx_trjconv md_0_10.tpr md_0_10.xtc
 
 gmx_rms md_0_10.tpr md_0_10_center.xtc md_0_10_ligand_rmsd.xvg
+
+. ${HOME}/miniconda3/etc/profile.d/conda.sh
+conda activate ${conda_venv}
+python ../xvg2yavg.py md_0_10_ligand_rmsd.xvg > rmsd_score.log
+conda deactivate
+conda deactivate
 
 cd ../
 

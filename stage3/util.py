@@ -1857,8 +1857,10 @@ def makeIndexRun(outputDir, outputFileBaseName, verbose = False):
     # Make new groups:
     # 1) the whole system except the ligand
     command = '!2\n'
-    # 2) One group with everything except water and ions (if present) for temp coupling
-    # 3) One new group with water and ions (if present) for temp coupling
+    # 2) The ligand without hydrogen
+    command += '2 & ! a H*\n'
+    # 3) One group with everything except water and ions (if present) for temp coupling
+    # 4) One new group with water and ions (if present) for temp coupling
     if 'ionised' in coordsFile:
         command += '!"Water_and_ions"\n"Water_and_ions"\nq\n'
     elif 'solvated' in coordsFile:
@@ -1880,11 +1882,14 @@ def makeIndexRun(outputDir, outputFileBaseName, verbose = False):
         else:
             groupA = '!Water'
             groupB = 'Water'
+        groupC = 'LIG_&_!H*'
+        groupD = '[ LIG ]'
 
-        # Rename the newly created temp coupling groups to get consistent names.
-        if 'solvated' in coordsFile:
-            with open(indexFileName) as f:
-                lines = f.readlines()
+        with open(indexFileName) as f:
+            lines = f.readlines()
+
+            # Rename the newly created temp coupling groups to get consistent names.
+            if 'solvated' in coordsFile:
 
                 foundA = False
                 foundB = False
@@ -1900,6 +1905,22 @@ def makeIndexRun(outputDir, outputFileBaseName, verbose = False):
                         foundB = True
                         if foundA:
                             break
+
+            # Rename the newly created ligand without hydrogen group to get consistent names.
+            foundC = False
+            for i in reversed(range(len(lines))):
+                if not foundC and groupC in lines[i]:
+                    lines[i] = '[ LIG_Heavy ]\n'
+                    foundC = True
+                    break
+
+            # Rename the duplicated ligand group to unique names.
+            countD = 0
+            for i in range(len(lines)):
+                if groupD in lines[i]:
+                    if countD > 0:
+                        lines[i] = '[ LIG_Dup{} ]\n'.format(countD)
+                    countD += 1
 
             with open(indexFileName, 'w') as f:
                 for line in lines:

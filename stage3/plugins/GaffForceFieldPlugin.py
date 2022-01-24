@@ -291,13 +291,14 @@ class GaffForceFieldPlugin(ForceFieldPlugin):
 
         coordsFilePath = os.path.dirname(coordsFile)
         coordsBaseName = os.path.basename(coordsFile)
+        coordsBaseName_wo_ext = os.path.splitext(coordsBaseName)[0]
 
-        topolFile = os.path.join(outputDir, os.path.splitext(coordsBaseName)[0] + '.top')
-        groFile = os.path.join(outputDir, os.path.splitext(coordsBaseName)[0] + '.gro')
-        restraintsFile = 'posre_' + os.path.splitext(coordsBaseName)[0] + '.itp'
+        topolFile = coordsBaseName_wo_ext + '.top'
+        groFile = coordsBaseName_wo_ext + '.gro'
+        restraintsFile = 'posre_' + coordsBaseName_wo_ext + '.itp'
 
-        if os.path.exists(topolFile) and os.path.exists(groFile) and os.path.exits(restraintsFile):
-            return topolFile, groFile, restraintsFile
+        #if os.path.exists(topolFile) and os.path.exists(groFile) and os.path.exits(restraintsFile):
+        #    return topolFile, groFile, restraintsFile
 
         pdb2gmxCommand = ['gmx'+gmxSuffix, 'pdb2gmx', '-f', coordsFile,
                         '-o', groFile,
@@ -352,6 +353,25 @@ class GaffForceFieldPlugin(ForceFieldPlugin):
                     except Exception:
                         pass
                     print(e)
+
+        topolFile = os.path.join(outputDir, coordsBaseName_wo_ext + '.top')
+        groFile = os.path.join(outputDir, coordsBaseName_wo_ext + '.gro')
+        restraintsFile = os.path.join(outputDir, 'posre_' + coordsBaseName_wo_ext + '.itp')
+        itpFiles = glob('*.itp')
+
+        if len(itpFiles) > 0:
+            for itpFile in itpFiles:
+                if not 'posre_' in itpFile:
+                    with open(itpFile) as f:
+                        lines = f.readlines()
+
+                    with open(itpFile, 'w') as f:
+                        for line in lines:
+                            stripped = line.strip()
+                            if stripped == '#ifdef POSRES':
+                                f.write('#ifdef POSRES || POSRES_PROT\n')
+                                continue
+                            f.write(line)
 
         if os.path.exists(topolFile):
             with open(topolFile) as f:

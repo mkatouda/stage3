@@ -147,7 +147,9 @@ fi
 . ${HOME}/miniconda3/etc/profile.d/conda.sh
 conda activate ${conda_venv}
 
-python ${stage3path}/stage.py -i ${ligand} -o ${outbasename} --forcefields ${ff_ligand} -q ${charge_model} -c ${protein} -b ${box_type} -d ${box_buff} -w ${water_model} --ffprotein ${ff_protein} --pname ${pname} --nname ${nname} -v
+python ${stage3path}/stage.py -i ${ligand} -o ${outbasename} --forcefields ${ff_ligand} \
+    -q ${charge_model} -c ${protein} --ffprotein ${ff_protein} -b ${box_type} -d ${box_buff} \
+    -w ${water_model} --pname ${pname} --nname ${nname} -v
 
 conda deactivate
 conda deactivate
@@ -390,7 +392,7 @@ gmx_rms md_0_10.tpr md_0_10_center.xtc md_0_10_ligand_rmsd.xvg
 
 . ${HOME}/miniconda3/etc/profile.d/conda.sh
 conda activate ${conda_venv}
-python ../xvg2yavg.py md_0_10_ligand_rmsd.xvg > rmsd_score.log
+python ../xvg2yavg.py md_0_10_ligand_rmsd.xvg rmsd_score.log
 conda deactivate
 conda deactivate
 

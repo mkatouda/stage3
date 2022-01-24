@@ -47,7 +47,7 @@
 
     Requirements: Python version >= 3.0
                   Open Babel version >= 2.3
-                  GROMACS (pdb2gmx, make_ndx, genrestr, editconf, solvage (genbox), grompp and genion)
+                  GROMACS (pdb2gmx, make_ndx, genrestr, editconf, solvate (genbox), grompp and genion)
                   ACPYPE (for GAFF and OPLS)
                   AnteChamber (for GAFF and OPLS)
                   MATCH (for CGENFF)
@@ -530,7 +530,7 @@ if __name__ == '__main__':
             if args.verbose:
                 print('ffDir: ', ffDir)
 
-            if os.path.exists(outputFile + '_' + converter.forceFieldName):
+            if os.path.exists(ffDir):
                 outputFileBaseName = os.path.basename(outputFile)
                 if args.verbose:
                     print('Generating %s topology' % converter.forceFieldName)
@@ -545,7 +545,6 @@ if __name__ == '__main__':
                     if os.path.splitext(proteinCoords)[1].lower() != 'gro':
                         try:
                             ffProteinTopology, ffProteinCoords, ffProteinPosre = converter.coordsToTopology(outputFile, proteinCoords, ffprotein, args.verbose)
-                            shutil.move(ffProteinPosre, ffDir)
                         except Exception:
                             print('Error generating protein topology.')
                             traceback.print_exc()

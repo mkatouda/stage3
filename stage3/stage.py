@@ -114,7 +114,7 @@ from ForceFieldPlugin import ForceFieldPlugin
 from ChargePlugin import ChargePlugin
 
 from util import babelConvert, renameAtoms, mol2RenameToLig, getNetChargeOfMol2, makeRestraintsRun, getChargeOfTopology
-from util import generateCharges, calibrateVdW, mergeCoordinateFiles, splitTopologyToItp, mergeTopologyFiles
+from util import generateCharges, calibrateVdW, mergeCoordinateFiles, copyItp, modproteinItp, splitTopologyToItp, mergeTopologyFiles
 from util import hydrogens2VirtualSites, generateLinearVirtualSites, solvateSystem, neutraliseSystem, makeIndexRun
 
 def _loadPlugins(path, name, baseclass):
@@ -258,11 +258,11 @@ if __name__ == '__main__':
                                'protein is provided and there exists a corresponding .top file that '
                                'toplogy file will be used for the protein, otherwise a new topology '
                                'file is generated.')
-    #parser.add_argument('-t', '--mergetopology',
-                        #help = 'Merge the created topology file (.top) with an '
-                               #'already existing topology file. '
-                               #'Must be used in combination with --mergecoordinates '
-                               #'with a .gro file of the protein.')
+    parser.add_argument('-t', '--mergetopology',
+                        help = 'Merge the created topology file (.top) with an '
+                               'already existing topology file. '
+                               'Must be used in combination with --mergecoordinates '
+                               'with a .gro file of the protein.')
     #parser.add_argument('-y', '--virtualhydrogens',
                         #action = 'store_true',
                         #help = 'Turn hydrogens into virtual interaction sites to allow longer '
@@ -331,10 +331,14 @@ if __name__ == '__main__':
     if 'opls' in forcefields and not 'gaff' in forcefields:
         forcefields.append('gaff')
 
-    #if args.mergetopology and \
-    #(not proteinCoords or proteinCoords.split('.')[-1].lower() != 'gro'):
-        #parser.error('A .gro coordinate file must be specified with '
-        #'--mergecoordinates if --mergetopology is used.')
+    if args.mergetopology:
+        if not proteinCoords or os.path.splitext(proteinCoords)[1].lower() != '.gro':
+            parser.error('A .gro coordinate file must be specified with '
+                         '--mergecoordinates if --mergetopology is used.')
+        else:
+            proteinTopology = os.path.abspath(args.mergetopology)
+    else:
+        proteinTopology = None
 
     if args.smiles:
         iBase, iFormat = None, 'smiles'
@@ -480,18 +484,8 @@ if __name__ == '__main__':
                     ffprotein = 'charmm27'
                     #ffprotein = 'charmm36-jul2021'
             else:
-                if converter.forceFieldName == 'gaff':
-                    if  'amber' in args.ffprotein:
-                        ffprotein = args.ffprotein
-                    else:
-                        ffprotein = 'amber99sb-ildn'
-                        #ffprotein = 'amber14sb'
-                elif converter.forceFieldName == 'cgenff':
-                    if 'charmm' in args.ffprotein:
-                        ffprotein = args.ffprotein
-                    else:
-                        ffprotein = 'charmm27'
-                        #ffprotein = 'charmm36-jul2021'
+                ffprotein = args.ffprotein
+
             if args.verbose:
                 print(args.ffprotein, 'ffprotein: ', ffprotein)
 
@@ -542,7 +536,7 @@ if __name__ == '__main__':
 
                 if proteinCoords:
                     print('proteinCoords: ', proteinCoords)
-                    if os.path.splitext(proteinCoords)[1].lower() != 'gro':
+                    if os.path.splitext(proteinCoords)[1].lower() != '.gro':
                         try:
                             ffProteinTopology, ffProteinCoords, ffProteinPosre = converter.coordsToTopology(outputFile, proteinCoords, ffprotein, args.verbose)
                         except Exception:
@@ -551,7 +545,10 @@ if __name__ == '__main__':
 
                     else:
                         ffProteinCoords = proteinCoords
-                        ffProteinTopology = None
+                        ffProteinTopology = proteinTopology
+                        ffProteinPosre = None
+                        copyItp(ffProteinTopology, ffDir, verbose = args.verbose)
+                        modproteinItp(ffProteinTopology, ffDir, verbose = args.verbose)
 
                     ffSpecificCoords = os.path.join(ffDir, outputFileBaseName + '.gro')
 
@@ -595,7 +592,7 @@ if __name__ == '__main__':
 
                     try:
                         if not ffProteinTopology or not os.path.exists(ffProteinTopology):
-                            ffProteinTopology = os.path.splitext(ffProteinCoords)[0]+'.top'
+                            ffProteinTopology = os.path.splitext(ffProteinCoords)[0] + '.top'
                             if not os.path.exists(ffProteinTopology):
                                 ffProteinTopology = None
 

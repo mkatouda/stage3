@@ -572,7 +572,8 @@ class OplsForceFieldPlugin(ForceFieldPlugin):
                     continue
 
                 f.write(line)
-            f.write('\n\n#ifdef POSRES || POSRES_LIG\n')
+            #f.write('\n\n#ifdef POSRES || POSRES_LIG\n')
+            f.write('\n\n#ifdef POSRES_LIG\n')
             f.write('#include "%s"\n' % ligRestrFile)
             f.write('#endif\n')
 
@@ -710,7 +711,8 @@ class OplsForceFieldPlugin(ForceFieldPlugin):
                         for line in lines:
                             stripped = line.strip()
                             if stripped == '#ifdef POSRES':
-                                f.write('#ifdef POSRES || POSRES_PROT\n')
+                                #f.write('#ifdef POSRES || POSRES_PROT\n')
+                                f.write('#ifdef POSRES_PROT\n')
                                 continue
                             f.write(line)
 
@@ -722,7 +724,8 @@ class OplsForceFieldPlugin(ForceFieldPlugin):
                 for line in lines:
                     stripped = line.strip()
                     if stripped == '#ifdef POSRES':
-                        f.write('#ifdef POSRES || POSRES_PROT\n')
+                        #f.write('#ifdef POSRES || POSRES_PROT\n')
+                        f.write('#ifdef POSRES_PROT\n')
                         continue
                     f.write(line)
         else:

@@ -156,7 +156,9 @@ class CgenffForceFieldPlugin(ForceFieldPlugin):
                  verbose = False):
         """ Run MATCH to generate cgenff parameters. """
 
-        matchCmd = ['MATCH.pl', '-Forcefield', 'top_all36_cgenff', inputFile]
+        forcefield = 'top_all36_cgenff_new'
+        #forcefield = 'top_all36_cgenff'
+        matchCmd = ['MATCH.pl', '-Forcefield', forcefield, inputFile]
 
         if verbose:
             print(' '.join(matchCmd))
@@ -372,7 +374,8 @@ class CgenffForceFieldPlugin(ForceFieldPlugin):
                     else:
                         topFile.write(line)
 
-                itpFile.write('\n\n#ifdef POSRES || POSRES_LIG\n')
+                #itpFile.write('\n\n#ifdef POSRES || POSRES_LIG\n')
+                itpFile.write('\n\n#ifdef POSRES_LIG\n')
                 itpFile.write('#include "%s"\n' % ligRestrFile)
                 itpFile.write('#endif\n')
 
@@ -469,7 +472,8 @@ class CgenffForceFieldPlugin(ForceFieldPlugin):
                         for line in lines:
                             stripped = line.strip()
                             if stripped == '#ifdef POSRES':
-                                f.write('#ifdef POSRES || POSRES_PROT\n')
+                                #f.write('#ifdef POSRES || POSRES_PROT\n')
+                                f.write('#ifdef POSRES_PROT\n')
                                 continue
                             f.write(line)
 
@@ -481,7 +485,8 @@ class CgenffForceFieldPlugin(ForceFieldPlugin):
                 for line in lines:
                     stripped = line.strip()
                     if stripped == '#ifdef POSRES':
-                        f.write('#ifdef POSRES || POSRES_PROT\n')
+                        #f.write('#ifdef POSRES || POSRES_PROT\n')
+                        f.write('#ifdef POSRES_PROT\n')
                         continue
                     f.write(line)
         else:

@@ -1649,6 +1649,53 @@ def generateLinearVirtualSites(outputDir, outputFileBaseName, verbose = False):
                 for dataLine in data:
                     f.write(dataLine)
 
+def copyItp(topology, outputDir, verbose = False):
+    """ Copy user supplyied itp files to working directiry. """
+
+    with open(topology) as topf:
+        topologyLines = topf.readlines()
+
+        for line in topologyLines:
+            if '#include' in line and not '.ff/' in line:
+                incF = line.split('"')[1]
+                if verbose:
+                    print('include file:', incF)
+                if os.path.exists(incF):
+                    shutil.copy(incF, os.path.join(outputDir, incF))
+
+def modproteinItp(topology, outputDir, verbose = False):
+    """ Modify user supplyied protein itp files in working directiry. """
+
+    with open(topology) as topf:
+        topologyLines = topf.readlines()
+
+        itpFiles = []
+        for line in topologyLines:
+            if '#include' in line and not '.ff/' in line:
+                incF = line.split('"')[1]
+                if verbose:
+                    print('include file:', incF)
+                if os.path.exists(incF):
+                    itpFiles.append(incF)
+
+    currDir = os.getcwd()
+    os.chdir(outputDir)
+
+    if len(itpFiles) > 0:
+        for itpFile in itpFiles:
+            if not 'posre_' in itpFile:
+                with open(itpFile) as f:
+                    lines = f.readlines()
+
+                with open(itpFile, 'w') as f:
+                    for line in lines:
+                        if line.strip() == '#ifdef POSRES':
+                            #f.write('#ifdef POSRES || POSRES_PROT\n')
+                            f.write('#ifdef POSRES_PROT\n')
+                        else:
+                            f.write(line)
+
+    os.chdir(currDir)
 
 def splitTopologyToItp(topology, verbose = False):
     """ Remove molecule specific information from a topology file to an itp

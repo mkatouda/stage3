@@ -75,6 +75,11 @@ class CgenffForceFieldPlugin(ForceFieldPlugin):
         outputFileBaseName = os.path.basename(output)
         forcefieldDir = os.path.join(output + '_%s' % self.forceFieldName, 'forcefield.ff')
 
+        f = output + '.gro'
+        if os.path.isfile(f):
+            shutil.copy(f, os.path.join(output + '_%s' % self.forceFieldName, 
+                                        outputFileBaseName + '.gro'))
+
         if removeFiles:
             command = shutil.move
         else:

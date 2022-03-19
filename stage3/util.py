@@ -1912,6 +1912,8 @@ def makeIndexRun(outputDir, outputFileBaseName, verbose = False):
         command += '!"Water_and_ions"\n"Water_and_ions"\nq\n'
     elif 'solvated' in coordsFile:
         command += '!"Water"\n"Water"\nq\n'
+    else:
+        command += 'q\n'
 
     makeIndexCmd = ['gmx'+gmxSuffix, 'make_ndx', '-f', coordsFile, '-o', indexFileName]
 

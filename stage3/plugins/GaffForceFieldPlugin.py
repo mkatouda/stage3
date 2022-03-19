@@ -41,40 +41,31 @@ class GaffForceFieldPlugin(ForceFieldPlugin):
 
         outputFileBaseName = os.path.basename(output)
 
+        acpypeDir = output + '.acpype'
         gaffDir = output + '_%s' % self.forceFieldName
         oplsDir = output + '_opls'
 
-        if removeFiles:
-            command = shutil.move
-        else:
-            command = shutil.copy
+        command = shutil.copy
 
         try:
-            shutil.rmtree(output + '.acpype')
-            if removeFiles:
-                for ext in ['_AC.inpcrd', '_AC.lib', '_AC.prmtop', '_user_gaff.mol2', '_AC.frcmod']:
-                    f = output + ext
-                    if os.path.isfile(f):
-                        os.remove(f)
+            f = os.path.join(acpypeDir, outputFileBaseName + '_GMX' + '.gro')
+            if os.path.isfile(f):
+                command(f, output + '.gro')
 
             if not os.path.exists(gaffDir):
                 os.mkdir(gaffDir)
 
-            for ext in ['.itp', '.top']:
-                f = output + '_GMX' + ext
+            for ext in ['.itp', '.top', '.gro']:
+                f = os.path.join(acpypeDir, outputFileBaseName + '_GMX' + ext)
                 if os.path.isfile(f):
+                    print(f)
                     command(f, os.path.join(gaffDir, outputFileBaseName + ext))
-
-            f = output + '_GMX' + '.gro'
-            if os.path.isfile(f):
-                command(f, output + '.gro')
 
             if not os.path.exists(oplsDir):
                 os.mkdir(oplsDir)
 
-            for ext in ['.itp', '.top']:
-                f = output + '_GMX_OPLS' + ext
-
+            for ext in ['.itp', '.top', '.gro']:
+                f = os.path.join(acpypeDir, outputFileBaseName + '_GMX_OPLS' + ext)
                 if os.path.isfile(f):
                     command(f, os.path.join(oplsDir, outputFileBaseName + ext))
 
@@ -90,6 +81,9 @@ class GaffForceFieldPlugin(ForceFieldPlugin):
                         l = line.replace(output + '_GMX', output)
                         l = l.replace(output, outputFileBaseName)
                         f.write(l)
+
+            if removeFiles:
+                shutil.rmtree(acpypeDir)
 
         except shutil.Error:
             print('Cannot clean up')
@@ -153,7 +147,10 @@ class GaffForceFieldPlugin(ForceFieldPlugin):
         for f in oldFiles:
             os.remove(f)
 
-        acpypeCmd = ['acpype', '-i', inputFile, '-b', output, '-o', 'gmx']
+        outputFileBaseName = os.path.basename(output)
+        print('acpype outputFileBaseName: ', outputFileBaseName)
+
+        acpypeCmd = ['acpype', '-i', inputFile, '-b', outputFileBaseName, '-o', 'gmx']
         if keepMol2Charges:
             acpypeCmd += ['-c', 'user']
             netCharge = None

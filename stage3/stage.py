@@ -393,7 +393,9 @@ if __name__ == '__main__':
         if args.verbose:
             print('inMolecule: ', inMolecule)
 
-        renameAtoms(inMolecule)
+        # Warning! This routine has some bugs for making wrong input mol2 file for acpype run.
+        if 'cgenff' in forcefields:
+            renameAtoms(inMolecule)
 
         if not args.keep_ligand_name:
             mol2RenameToLig(inMolecule)
@@ -402,17 +404,12 @@ if __name__ == '__main__':
         if args.verbose:
             print('ligandCoords: ', ligandCoords)
 
-        #if not os.path.exists(ligandCoords):
-        #    try:
-        #        babelConvert(inMolecule, ligandCoords, verbose = args.verbose)
-        #    except Exception:
-        #        print('Cannot create .gro file:')
-        #        traceback.print_exc()
-        try:
-            babelConvert(inMolecule, ligandCoords, verbose = args.verbose)
-        except Exception:
-            print('Cannot create .gro file:')
-            traceback.print_exc()
+        if not os.path.exists(ligandCoords):
+            try:
+                babelConvert(inMolecule, ligandCoords, verbose = args.verbose)
+            except Exception:
+                print('Cannot create .gro file:')
+                traceback.print_exc()
 
         count += 1
 
@@ -438,6 +435,7 @@ if __name__ == '__main__':
 
         if args.charge_method:
             print('charge_method: ', args.charge_method)
+            """
             try:
                 if args.charge_method in standardChargeMethods:
                     generateCharges(inMolecule, args.charge_method, netCharge,
@@ -452,6 +450,7 @@ if __name__ == '__main__':
             except Exception:
                 print('Cannot generate charges:')
                 traceback.print_exc()
+            """
 
         outputFile = os.path.splitext(inMolecule)[0]
         if args.verbose:
@@ -530,9 +529,9 @@ if __name__ == '__main__':
                     print('Generating %s topology' % converter.forceFieldName)
 
                 ffSpecificCoords = os.path.join(ffDir, outputFileBaseName + '.gro')
-                if os.path.exists(ffSpecificCoords):
-                    os.remove(ffSpecificCoords)
-                ffSpecificCoords = None
+                #if os.path.exists(ffSpecificCoords):
+                #    os.remove(ffSpecificCoords)
+                #ffSpecificCoords = None
 
                 if proteinCoords:
                     print('proteinCoords: ', proteinCoords)
@@ -550,7 +549,7 @@ if __name__ == '__main__':
                         copyItp(ffProteinTopology, ffDir, verbose = args.verbose)
                         modproteinItp(ffProteinTopology, ffDir, verbose = args.verbose)
 
-                    ffSpecificCoords = os.path.join(ffDir, outputFileBaseName + '.gro')
+                    #ffSpecificCoords = os.path.join(ffDir, outputFileBaseName + '.gro')
 
                     if args.verbose:
                         print('Merging coordinates: ', ligandCoords, 'with', ffProteinCoords, 'to', ffSpecificCoords)
@@ -581,7 +580,7 @@ if __name__ == '__main__':
 
                 #generateLinearVirtualSites(ffDir, outputFileBaseName, verbose = args.verbose)
 
-                ffSpecificCoords = os.path.join(ffDir, outputFileBaseName + '.gro')
+                #ffSpecificCoords = os.path.join(ffDir, outputFileBaseName + '.gro')
                 if not os.path.exists(ffSpecificCoords):
                     ffSpecificCoords = None
 
@@ -612,7 +611,7 @@ if __name__ == '__main__':
 
                 if args.water:
                     if args.box_buffer > 0:
-                        solvateSystem(ffSpecificCoords or ligandCoords, ffDir, outputFileBaseName, args.water,
+                        solvateSystem(ffSpecificCoords, ffDir, outputFileBaseName, args.water,
                         args.box_type, args.box_buffer, verbose = args.verbose)
 
                     if totCharge == None:

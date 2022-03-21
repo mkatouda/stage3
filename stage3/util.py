@@ -146,8 +146,9 @@ def babelConvert(inputFile = None, outputFile = None, smiles = None, pH = None,
     if doMulti:
         babelCmd += ['--separate', '-m', '-v[OH2]']
 
-    # Use mmff94 charges to get a good net charge.
-    babelCmd += ['--partialcharge', 'mmff94']
+    # Use mmff94 charges to get a good net charge but sometimes fails bug, thus change to gasteiger.
+    #babelCmd += ['--partialcharge', 'mmff94']
+    babelCmd += ['--partialcharge', 'gasteiger']
     oFormat = os.path.splitext(molFile)[1]
     babelCmd += ['-o' + oFormat[1:], '-O', molFile]
 
@@ -200,8 +201,9 @@ def babelConvert(inputFile = None, outputFile = None, smiles = None, pH = None,
         try:
             for molFile in molFiles:
                 babelCmd =  [binaryPath, molFile, '-p %.2f' % pH, molFile]
-                # Use mmff94 charges to get a good net charge.
-                babelCmd += ['--partialcharge', 'mmff94']
+                # Use mmff94 charges to get a good net charge but sometimes fails bug, thus change to gasteiger.
+                #babelCmd += ['--partialcharge', 'mmff94']
+                babelCmd += ['--partialcharge', 'gasteiger']
                 if verbose:
                     print(' '.join(babelCmd))
 
@@ -796,7 +798,7 @@ def generateCharges(inFile, method, netCharge, multiplier = 1.0, verbose = False
             print('Trying to continue anyhow.')
 
 
-    elif method in ['am1bcc', 'mmff94', 'eem', 'qeq', 'qtpie']:
+    elif method in ['am1bcc', 'gasteiger', 'mmff94', 'eem', 'eqeq', 'qeq', 'qtpie', 'fromfile']:
         if method == 'am1bcc':
             command = ['antechamber', '-fi', 'mol2', '-i', inFile, '-fo', 'mol2', '-o', inFile, '-nc', '%d' % netCharge, '-c', 'bcc', '-pf', 'y']
         else:

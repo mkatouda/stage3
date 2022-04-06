@@ -114,7 +114,7 @@ class CgenffForceFieldPlugin(ForceFieldPlugin):
             if os.path.isfile(f):
                 os.remove(f)
 
-    def _fixCoordsFileResidues(self, outputDir, outputFileBaseName, coordsFile, verbose = False):
+    def _fixCoordsFileResidues(self, coordsFile, verbose = False):
         """ Replace residue and atom names to match the force field nomenclature
         Returns the name of the new coordinate file """
 
@@ -146,11 +146,11 @@ class CgenffForceFieldPlugin(ForceFieldPlugin):
                         print(line)
 
         if modified:
-            coordsBaseName = os.path.basename(coordsFile)
-            newCoordsFile = os.path.join(outputDir, outputFileBaseName + '_' + self.forceFieldName + '_' + coordsBaseName)
+            newCoordsFile = os.path.basename(coordsFile)
             with open(newCoordsFile, 'w') as f:
                 for line in lines:
                     f.write(line)
+            newCoordsFile = os.path.abspath(newCoordsFile)
 
             return newCoordsFile
 
@@ -393,6 +393,7 @@ class CgenffForceFieldPlugin(ForceFieldPlugin):
 
         outputFileBaseName = os.path.basename(output)
         outputDir = output + '_%s' % self.forceFieldName
+        currDir = os.getcwd()
 
         coordsFilePath = os.path.dirname(coordsFile)
         coordsBaseName = os.path.basename(coordsFile)
@@ -405,7 +406,6 @@ class CgenffForceFieldPlugin(ForceFieldPlugin):
         #if os.path.exists(topolFile) and os.path.exists(groFile) and os.path.exits(restraintsFile):
         #    return topolFile, groFile, restraintsFile
 
-        currDir = os.getcwd()
         os.chdir(outputDir)
 
         pdb2gmxCommand = ['gmx'+gmxSuffix, 'pdb2gmx', '-f', coordsFile,
@@ -434,7 +434,7 @@ class CgenffForceFieldPlugin(ForceFieldPlugin):
             print('Fixing residue names of %s for %s' % (coordsFile, self.forceFieldName))
 
             # Try renaming some residues and atoms to match the force field - see if it helps.
-            newCoordsFile = self._fixCoordsFileResidues(outputDir, outputFileBaseName, coordsFile, verbose)
+            newCoordsFile = self._fixCoordsFileResidues(coordsFile, verbose)
             if newCoordsFile:
                 print('Trying again')
                 pdb2gmxCommand = ['gmx'+gmxSuffix, 'pdb2gmx', '-f', newCoordsFile,
@@ -462,9 +462,9 @@ class CgenffForceFieldPlugin(ForceFieldPlugin):
                         pass
                     print(e)
 
-        topolFile = os.path.join(outputDir, coordsBaseName_wo_ext + '.top')
-        groFile = os.path.join(outputDir, coordsBaseName_wo_ext + '.gro')
-        restraintsFile = os.path.join(outputDir, 'posre_' + coordsBaseName_wo_ext + '.itp')
+        topolFile = os.path.abspath(topolFile)
+        groFile = os.path.abspath(groFile)
+        restraintsFile = os.path.abspath(restraintsFile)
         itpFiles = glob('*.itp')
 
         if len(itpFiles) > 0:

@@ -33,9 +33,9 @@
 ligand=jz4.mol
 protein=3HTB_protein.pdb
 outbasename=3HTB-jz4-wat
-ff_ligand=cgenff #cgenff gaff
+ff_ligand=gaff #cgenff gaff
 charge_model=am1bcc #am1bcc am1bcc-pol hf 
-ff_protein=charmm27 #charmm27 charmm36-feb2021 amber99sb-ildn amber14sb_parmbsc1
+ff_protein=amber99sb-ildn #charmm27 charmm36-feb2021 amber99sb-ildn amber14sb_parmbsc1
 water_model=tip3p
 box_type=dodecahedron
 box_buff=1.0
@@ -104,7 +104,8 @@ elif [ ${system,,} = 'flow-fx' ]; then
     NUM_CORES=40
     NUM_THREADS=10
 elif [ ${system,,} = 'flow-cx' ]; then
-    module load gcc/10.3.0 cuda/11.6.2
+    module purge
+    module load gcc/8.4.0 cuda/11.6.2
     GMX_CMD=gmx
     GMX_BIN=${HOME}/data/bin/x86_64/gromacs/2021.4/gpu/gcc/bin
     . ${GMX_BIN}/GMXRC.bash
@@ -392,7 +393,7 @@ gmx_rms md_0_10.tpr md_0_10_center.xtc md_0_10_ligand_rmsd.xvg
 . ${HOME}/miniconda3/etc/profile.d/conda.sh
 conda activate ${conda_venv}
 python ${stage3path}/xvg2yavg.py md_0_10_interaction_energy_sum.xvg interaction_energy_score_md_0_10.log
-python ${stage3path}/xvg2yavg.py md_0_10_ligand_rmsd.xvg rmsd_score.log
+python ${stage3path}/xvg2yavg.py md_0_10_ligand_rmsd.xvg rmsd_score_md_0_10.log
 conda deactivate
 conda deactivate
 

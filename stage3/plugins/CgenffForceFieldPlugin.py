@@ -249,6 +249,7 @@ class CgenffForceFieldPlugin(ForceFieldPlugin):
 
         currDir = os.getcwd()
         os.chdir(topologyDir)
+        
         forcefieldArg = os.path.join('forcefield')
         pdb2gmxCommand = ['gmx'+gmxSuffix, 'pdb2gmx', '-f', output + '.gro', '-o', 'temp.gro',
                           '-p', topologyFileName,

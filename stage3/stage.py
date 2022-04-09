@@ -495,13 +495,8 @@ if __name__ == '__main__':
                                    keepMol2Charges = args.retain_charges or args.charge_method,
                                    netCharge = netCharge,
                                    verbose = args.verbose)
-
             except Exception:
                 print('Error running generator for ' + converter.forceFieldName)
-                traceback.print_exc()
-
-            except Exception:
-                print('Error cleaning up in ' + converter.forceFieldName)
                 traceback.print_exc()
 
             try:

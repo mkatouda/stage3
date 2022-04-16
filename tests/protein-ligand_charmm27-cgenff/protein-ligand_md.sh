@@ -198,7 +198,7 @@ gmx_run_md() {
 	fi
 	if [ ${USE_GPU,,} = 'true' ]; then
 	    ${MPIRUN} -n ${NUM_PROCS} ${GMX_CMD} mdrun -ntomp ${NUM_THREADS} -rdd ${rdd} -nb gpu -gpu_id ${GPU_ID} -deffnm ${tpr%.*}
-	elif [ ${NUM_PROCS} -gt 1 ]; then
+	else
 	    ${MPIRUN} -n ${NUM_PROCS} ${GMX_CMD} mdrun -ntomp ${NUM_THREADS} -rdd ${rdd} -deffnm ${tpr%.*}
 	fi
     else
@@ -229,7 +229,7 @@ gmx_run_md_restart() {
 	fi
 	if [ ${USE_GPU,,} = 'true' ]; then
 	    ${MPIRUN} -n ${NUM_PROCS} ${GMX_CMD} mdrun -ntomp ${NUM_THREADS} -rdd ${rdd} -nb gpu -gpu_id ${GPU_ID} -deffnm ${tpr%.*}
-	elif [ ${NUM_PROCS} -gt 1 ]; then
+	else
 	    ${MPIRUN} -n ${NUM_PROCS} ${GMX_CMD} mdrun -ntomp ${NUM_THREADS} -rdd ${rdd} -deffnm ${tpr%.*}
 	fi
     else

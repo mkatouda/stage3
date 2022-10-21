@@ -18,7 +18,7 @@ from glob import glob
 from numpy import array, empty, average, absolute, power
 from math import sqrt
 
-from molScripts.molecule import MolSystem, Atom
+from .molScripts.molecule import MolSystem, Atom
 
 # This is for Python < 2.7
 try:
@@ -708,6 +708,8 @@ def generateCharges(inFile, method, netCharge, multiplier = 1.0, verbose = False
     netCharge = int(round(netCharge,0))
 
     shutil.copy(inFile, inFile + '.bak')
+    outFile =  inFile
+    inFile = inFile + '.bak'
 
     if method == 'am1bcc-pol':
         molName = os.path.splitext(os.path.basename(inFile))[0]
@@ -778,7 +780,7 @@ def generateCharges(inFile, method, netCharge, multiplier = 1.0, verbose = False
             print(e)
             print('Trying to continue anyhow.')
 
-        command = ['antechamber', '-fi', 'ac', '-i', antechamberFileName, '-fo', 'mol2', '-o', inFile, '-at', 'sybyl', '-pf', 'y']
+        command = ['antechamber', '-fi', 'ac', '-i', antechamberFileName, '-fo', 'mol2', '-o', outFile, '-at', 'sybyl', '-pf', 'y']
 
         try:
             if verbose:
@@ -797,12 +799,8 @@ def generateCharges(inFile, method, netCharge, multiplier = 1.0, verbose = False
             print(e)
             print('Trying to continue anyhow.')
 
-
-    elif method in ['am1bcc', 'gasteiger', 'mmff94', 'eem', 'eqeq', 'qeq', 'qtpie', 'fromfile']:
-        if method == 'am1bcc':
-            command = ['antechamber', '-fi', 'mol2', '-i', inFile, '-fo', 'mol2', '-o', inFile, '-nc', '%d' % netCharge, '-c', 'bcc', '-pf', 'y']
-        else:
-            command = ['obabel', '-imol2', inFile, '-omol2', '-O',  inFile, '--partialcharge', method]
+    elif method == 'am1bcc':
+        command = ['antechamber', '-fi', 'mol2', '-i', inFile, '-fo', 'mol2', '-o', outFile, '-nc', '%d' % netCharge, '-c', 'bcc', '-pf', 'y']
 
         try:
             if verbose:
@@ -823,10 +821,37 @@ def generateCharges(inFile, method, netCharge, multiplier = 1.0, verbose = False
 
         if abs(multiplier - 1.0) > 0.001:
             molSys = MolSystem()
-            with open(inFile, 'r') as f:
+            with open(outFile, 'r') as f:
                 molSys.readMol2(f.readlines())
             molSys.multiplyCharges(multiplier)
-            with open(inFile, 'w') as f:
+            with open(outFile, 'w') as f:
+                molSys.writeMol2(f)
+
+    elif method in ['gasteiger', 'mmff94', 'eem', 'eqeq', 'qeq', 'qtpie', 'fromfile']:
+        command = ['obabel', '-imol2', inFile, '-omol2', '-O', outFile, '--partialcharge', method]
+        try:
+            if verbose:
+                print(' '.join(command))
+
+            result = getCommandOutput(command)
+            if verbose:
+                print(result)
+
+        except subprocess.CalledProcessError as e:
+            print('Failed running', ' '.join(command))
+            try:
+                print(result, '\n')
+            except Exception:
+                pass
+            print(e)
+            print('Trying to continue anyhow.')
+
+        if abs(multiplier - 1.0) > 0.001:
+            molSys = MolSystem()
+            with open(outFile, 'r') as f:
+                molSys.readMol2(f.readlines())
+            molSys.multiplyCharges(multiplier)
+            with open(outFile, 'w') as f:
                 molSys.writeMol2(f)
 
     d = os.path.dirname(inFile)

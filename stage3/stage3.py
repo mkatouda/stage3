@@ -1,15 +1,27 @@
 #!/usr/bin/env python
 
 """
-    A wrapper for generating GROMACS topology files.
-    Can use ACPYPE (calling AnteChamber) and MATCH to generate
+    
+    STaGE3 VERSION 0.1.0
+
+    STaGE3 is the automatic GROMACS Topology Generation tool of organic 
+    molecules using the GAFF, OPLS-AA, and CGenFF force fields.
+    STaGE3 is the python 3 fork of STaGE (https://gitlab.com/gromacs/stage).
+    If you use STaGE3, please cite original paper: Lundborg M., Lindahl E.
+    Automatic GROMACS TopologyGeneration and Comparisons of Force Fields
+    for Solvation Free Energy Calculations. J. Phys. Chem. B. 2014,
+    DOI: 10.1021/jp505332p
+
+    STaGE3 can use ACPYPE (calling AnteChamber) and MATCH to generate
     topologies for GAFF, OPLS and CGENFF and compatible charges.
     OPLS atom types and charges, from ACPYPE, are improved.
     The range of parameter assignment tools might be extended in the future.
 
-                      VERSION 0.9.9
+    STaGE3 was forked by Michio Katouda
+    Copyright (c) 2021-2022, 
+    Check out https://github.com/mkatouda/stage3 for more information.
 
-    Written by Magnus Lundborg
+    Originl STaGE was written by Magnus Lundborg
     Copyright (c) 2013-2015, The GROMACS development team.
     Check out http://www.gromacs.org for more information.
 
@@ -103,34 +115,38 @@ import sys
 import os
 import argparse
 import shutil
-import time
 import traceback
 import inspect
-
 from glob import glob
-from itertools import product, chain
-from operator import itemgetter
-from ForceFieldPlugin import ForceFieldPlugin
-from ChargePlugin import ChargePlugin
 
-from util import babelConvert, renameAtoms, mol2RenameToLig, getNetChargeOfMol2, makeRestraintsRun, getChargeOfTopology
-from util import generateCharges, calibrateVdW, mergeCoordinateFiles, copyItp, modproteinItp, splitTopologyToItp, mergeTopologyFiles
-from util import hydrogens2VirtualSites, generateLinearVirtualSites, solvateSystem, neutraliseSystem, makeIndexRun
+from .ForceFieldPlugin import ForceFieldPlugin
+from .GaffForceFieldPlugin import GaffForceFieldPlugin
+from .CgenffForceFieldPlugin import CgenffForceFieldPlugin
+#from .OplsForceFieldPlugin import OplsForceFieldPlugin
+from .ChargePlugin import ChargePlugin
+from .util import babelConvert, renameAtoms, mol2RenameToLig, getNetChargeOfMol2, makeRestraintsRun, getChargeOfTopology
+from .util import generateCharges, calibrateVdW, mergeCoordinateFiles, copyItp, modproteinItp, splitTopologyToItp, mergeTopologyFiles
+from .util import hydrogens2VirtualSites, generateLinearVirtualSites, solvateSystem, neutraliseSystem, makeIndexRun
+
 
 def _loadPlugins(path, name, baseclass):
 
     loadedPlugins = []
 
     plugins = glob(os.path.join(path, name))
-    print('plugins: ', plugins)
+    print(os.getcwd(), 'plugins: ', plugins)
     for i in range(len(plugins)):
-        plugins[i] = 'plugins.' + os.path.basename(plugins[i])[:-3]
+        #plugins[i] = '.plugins.' + os.path.basename(plugins[i])[:-3]
+        plugins[i] = 'from .plugins import ' + os.path.basename(plugins[i])[:-3]
+        print(plugins[i])
 
     for plugin in plugins:
+        print(plugin)
 
         try:
             p = __import__(plugin, fromlist = ['nonsense']) # fromlist must be a non-empty list
         except (ImportError,NotImplementedError):
+            print('ImportError')
             continue
 
         for cls in dir(p):                         # Loop over all objects in the module's namespace.
@@ -147,6 +163,9 @@ def _loadPlugins(path, name, baseclass):
                 print('Error instantiating plugin:', plugin)
                 traceback.print_exc()
 
+    print('loadedPlugins:', loadedPlugins)
+
+    print('baseclass:', baseclass)
     if baseclass == 'ForceFieldPlugin':
         loadedPlugins = sorted(loadedPlugins, key=lambda c: (c.order, c.forceFieldName))
     elif baseclass == 'ChargePlugin':
@@ -156,17 +175,8 @@ def _loadPlugins(path, name, baseclass):
 
     return loadedPlugins
 
-if __name__ == '__main__':
-
+def getChargeMethod():
     progDir = os.path.dirname(__file__)
-
-    converters = _loadPlugins(os.path.join(progDir, 'plugins'), '*ForceFieldPlugin.py', ForceFieldPlugin)
-    #print('converters: ', converters)
-
-    forcefieldsString = ','.join(str(conv.forceFieldName) for conv in converters)
-    print('forcefieldsString: ', forcefieldsString)
-
-
     standardChargeMethods = ['am1bcc', 'am1bcc-pol', 'mmff94', 'eem', 'qeq', 'qtpie']
     chargeMethodsHelp = ['am1bcc: AM1 with bond charge correction (antechamber)',
                          'am1bcc-pol: STaGE\'s own more polarized bond charge correction (antechamber)',
@@ -186,6 +196,9 @@ if __name__ == '__main__':
     chargeMethodsList = standardChargeMethods + chargePluginNameList
     print('chargeMethodsList: ', chargeMethodsList)
 
+    return chargeMethodsList
+
+def get_parser():
     parser = argparse.ArgumentParser(description='STaGE is a tool for generating GROMACS topologies '
                                      'of small molecules for different force fields (currently GAFF, OPLS-AA '
                                      'and CGenFF). It uses many external programs to perform its tasks, '
@@ -201,7 +214,8 @@ if __name__ == '__main__':
                         'instead of an input file (must be inside quotes).')
     parser.add_argument('-o', '--outputfile',
                         help = 'Name of the output files (file extensions '
-                        'will be appended).', required=True)
+                        'will be appended).')
+#                        'will be appended).', required=True)
     parser.add_argument('-k', '--keep_ligand_name',
                         action = 'store_true',
                         help = 'Do not rename the ligand in the output files. '
@@ -239,8 +253,9 @@ if __name__ == '__main__':
                         action = 'store_true',
                         help = 'Keep the mol2 charges.')
     parser.add_argument('-q', '--charge_method',
-                        choices = standardChargeMethods + chargePluginNameList,
-                        help = 'Use the specified charge method for all force fields. ' + ', '.join(chargeMethodsHelp))
+                        help = 'Use the specified charge method for all force fields.')
+#                        choices = standardChargeMethods + chargePluginNameList,
+#                        help = 'Use the specified charge method for all force fields. ' + ', '.join(chargeMethodsHelp))
     parser.add_argument('-f', '--charge_multiplier',
                         type = float,
                         default = 1.0,
@@ -268,9 +283,10 @@ if __name__ == '__main__':
                         #help = 'Turn hydrogens into virtual interaction sites to allow longer '
                                #'timesteps (experimental).')
     parser.add_argument('--forcefields',
-                        default = forcefieldsString,
+                        default = 'gaff',
                         help = 'Force fields to generate parameters for, specified as a '
-                               'comma-separated string without spaces. Default: %s' % forcefieldsString)
+                               'comma-separated string without spaces. Default: %s' % 'gaff'
+                        )
     parser.add_argument('--ffprotein',
                         default = None,
                         help = 'Force field of protein.')
@@ -283,130 +299,150 @@ if __name__ == '__main__':
     parser.add_argument('-v', '--verbose',
                         action = 'store_true',
                         help = 'Verbose output.')
-
+        
     args = parser.parse_args()
 
-    count = 0
+    #if not args.inputfile and not args.smiles:
+    #    parser.error('No molecule input specified. Either -i or -s '
+    #    'must be provided.')
 
-    if not args.inputfile and not args.smiles:
-        parser.error('No molecule input specified. Either -i or -s '
-        'must be provided.')
+    #if not args.outputfile:
+    #    parser.error('No output name specified. -o must be specified. '
+    #    'File extensions will be appended to the name')
 
-    if not args.outputfile:
-        parser.error('No output name specified. -o must be specified. '
-        'File extensions will be appended to the name')
+    #if args.inputfile and args.smiles:
+    #    parser.error('--input and --smiles parameters cannot be used together.')
 
-    if args.inputfile and args.smiles:
-        parser.error('--input and --smiles parameters cannot be used together.')
+    #if args.retain_charges and args.charge_method:
+    #    parser.error('--retain_charges and --charge_method parameters cannot be '
+    #                 'used together.')
 
-    if args.retain_charges and args.charge_method:
-        parser.error('--retain_charges and --charge_method parameters cannot be '
-                     'used together.')
+    #if args.outputfile == args.inputfile:
+    #    parser.error('Output name and input file may not be identical.')
 
-    if args.outputfile == args.inputfile:
-        parser.error('Output name and input file may not be identical.')
+    #if args.inputfile and not os.path.exists(args.inputfile):
+    #    parser.error('The input file does not exists.')
 
-    if args.inputfile and not os.path.exists(args.inputfile):
-        parser.error('The input file does not exists.')
+    return args 
 
-    if args.mergecoordinates:
-        proteinCoords = os.path.abspath(args.mergecoordinates)
+def stage3_exec(conf):
+
+    if conf.mergecoordinates:
+        proteinCoords = os.path.abspath(conf.mergecoordinates)
         print('proteinCoords: ', proteinCoords)
         if os.path.splitext(proteinCoords)[1].lower() not in ('.gro', '.pdb'):
-            parser.error('The coordinates file to merge with must have a '
-            '.gro or .pdb extension')
+            print('The coordinates file to merge with must have a '
+                  '.gro or .pdb extension')
+            sys.exit(1)
     else:
         proteinCoords = None
+
+    if conf.mergetopology:
+        if not proteinCoords or os.path.splitext(proteinCoords)[1].lower() != '.gro':
+            print('A .gro coordinate file must be specified with '
+                  '--mergecoordinates if --mergetopology is used.')
+            sys.exit(1)
+        else:
+            proteinTopology = os.path.abspath(conf.mergetopology)
+    else:
+        proteinTopology = None
 
     # chosenForcefields contains the actual force fields that were chosen by the user.
     # However, if generating OPLS parameters GAFF parameters must first be generated,
     # but these can safely be removed later on.
-    chosenForcefields = args.forcefields.split(',')
+    chosenForcefields = conf.forcefields.lower().split(',')
     forcefields = list(chosenForcefields)
 
+    forcefieldsString = ['gaff', 'cgenff']
+    converters = []
     for forcefield in forcefields:
         if forcefield not in forcefieldsString:
-            parser.error('Force field %s is not available.' % forcefield)
+            print('Force field %s is not available.' % forcefield)
+            sys.exit(1)
+        elif forcefield == 'gaff':
+            converter = GaffForceFieldPlugin()
+#        elif forcefield == 'opls': # Warning: currently not available!
+#            converter = OplsForceFieldPlugin.GaffForceFieldPlugin()
+        elif forcefield == 'cgenff':
+            converter = CgenForceFieldPlugin()
+        converters.append(converter)
+    print('converters:', converters)
 
     if 'opls' in forcefields and not 'gaff' in forcefields:
         forcefields.append('gaff')
 
-    if args.mergetopology:
-        if not proteinCoords or os.path.splitext(proteinCoords)[1].lower() != '.gro':
-            parser.error('A .gro coordinate file must be specified with '
-                         '--mergecoordinates if --mergetopology is used.')
-        else:
-            proteinTopology = os.path.abspath(args.mergetopology)
-    else:
-        proteinTopology = None
+    standardChargeMethods = ['am1bcc', 'am1bcc-pol', 'mmff94', 'eem', 'qeq', 'qtpie']
 
-    if args.smiles:
+    if conf.smiles:
         iBase, iFormat = None, 'smiles'
-        outputFile = os.path.abspath(args.outputfile)
+        outputFile = os.path.abspath(conf.outputfile)
     else:
-        iBase, iFormat = os.path.splitext(args.inputfile)
+        iBase, iFormat = os.path.splitext(conf.inputfile)
         iFormat = iFormat.lower()
-        outputFile = os.path.abspath(args.outputfile)
+        outputFile = os.path.abspath(conf.outputfile)
         #outputFile = iBase
 
-    if args.inputfile:
-        inputFile = os.path.abspath(args.inputfile)
+    if conf.inputfile:
+        inputFile = os.path.abspath(conf.inputfile)
     else:
         inputFile = None
 
-    if args.verbose:
+    if conf.verbose:
         print('iBase: ', iBase, 'iFormat:', iFormat)
         print('inputFile:', inputFile)
         print('outputFile:', outputFile)
 
     if ',' in outputFile or (inputFile and ',' in inputFile):
-        parser.error('The output and/or input files must not contain a comma (",")')
+        print('The output and/or input files must not contain a comma (",")')
+        sys.exit(1)
 
-    if iFormat != '.mol2' or args.ph:
-        if args.smiles:
+    if iFormat != '.mol2' or conf.ph:
+        if conf.smiles:
             inMolecules = babelConvert(outputFile = outputFile,
-                                       smiles = args.smiles,
-                                       pH = args.ph,
-                                       verbose = args.verbose)
+                                       smiles = conf.smiles,
+                                       pH = conf.ph,
+                                       verbose = conf.verbose)
         else:
             inMolecules = babelConvert(inputFile = inputFile, outputFile =
-                                       outputFile, pH = args.ph,
-                                       verbose = args.verbose)
+                                       outputFile, pH = conf.ph,
+                                       verbose = conf.verbose)
     else:
         if inputFile != outputFile+'.mol2':
             shutil.copy(inputFile, outputFile+'.mol2')
         inMolecules = [outputFile+'.mol2']
 
-    if args.verbose:
+    if conf.verbose:
         print('inMolecules:', inMolecules)
 
     if not inMolecules:
         print('Could not convert molecule to mol2')
         sys.exit(1)
 
-    if args.calibration and not os.path.exists(args.calibration):
+    if conf.calibration and not os.path.exists(conf.calibration):
         print('Calibration file not found. Continuing without calibrating vdW parameters.')
-        args.calibration = None
+        conf.calibration = None
+
+    count = 0
 
     for inMolecule in inMolecules:
 
-        if args.verbose:
+        if conf.verbose:
             print('inMolecule: ', inMolecule)
 
         # Warning! This routine has some bugs for making wrong input mol2 file for acpype run.
         if 'cgenff' in forcefields:
             renameAtoms(inMolecule)
 
-        if not args.keep_ligand_name:
+        if not conf.keep_ligand_name:
             mol2RenameToLig(inMolecule)
 
         ligandCoords = os.path.splitext(inMolecule)[0] + '.gro'
-        if args.verbose:
+        if conf.verbose:
             print('ligandCoords: ', ligandCoords)
 
         if not os.path.exists(ligandCoords):
             try:
-                babelConvert(inMolecule, ligandCoords, verbose = args.verbose)
+                babelConvert(inMolecule, ligandCoords, verbose = conf.verbose)
             except Exception:
                 print('Cannot create .gro file:')
                 traceback.print_exc()
@@ -416,11 +452,11 @@ if __name__ == '__main__':
         netCharge = getNetChargeOfMol2(inMolecule)
 
         #MK
-        if args.verbose:
+        if conf.verbose:
             print('netCharge: ', netCharge)
 
         try:
-            makeRestraintsRun(ligandCoords, verbose = args.verbose)
+            makeRestraintsRun(ligandCoords, verbose = conf.verbose)
         except Exception:
             print('Cannot make restraints:')
             traceback.print_exc()
@@ -433,27 +469,26 @@ if __name__ == '__main__':
                   'corrections must be applied. See e.g.\n'
                   'Kastenholz and Hunenberger. J. Chem. Phys. 2006, 124, 124106-27' % netCharge)
 
-        if args.charge_method:
-            print('charge_method: ', args.charge_method)
-            """
+        if conf.charge_method:
+            charge_method = conf.charge_method.lower()
+            print('charge_method: ', charge_method)
             try:
-                if args.charge_method in standardChargeMethods:
-                    generateCharges(inMolecule, args.charge_method, netCharge,
-                                    multiplier = args.charge_multiplier, verbose = args.verbose)
+                if charge_method in standardChargeMethods:
+                    generateCharges(inMolecule, charge_method, netCharge,
+                                    multiplier = conf.charge_multiplier, verbose = conf.verbose)
                 else:
                     for pl in chargePlugins:
-                        if args.charge_method in pl.alternativeChargeMethods:
-                            pl.generateCharges(inMolecule, args.charge_method, netCharge,
-                                               multiplier = args.charge_multiplier,
-                                               verbose = args.verbose)
+                        if charge_method in pl.alternativeChargeMethods:
+                            pl.generateCharges(inMolecule, charge_method, netCharge,
+                                               multiplier = conf.charge_multiplier,
+                                               verbose = conf.verbose)
                             break
             except Exception:
                 print('Cannot generate charges:')
                 traceback.print_exc()
-            """
 
         outputFile = os.path.splitext(inMolecule)[0]
-        if args.verbose:
+        if conf.verbose:
             print('outputFile: ', outputFile)
 
         # The opls directory is automotically created when generating a GAFF topology.
@@ -471,56 +506,55 @@ if __name__ == '__main__':
             gaffDidExist = True
         else:
             gaffDidExist = False
+
         for converter in converters:
             if not converter.forceFieldName in forcefields:
                 continue
 
-            if args.ffprotein is None:
+            if conf.ffprotein is None:
                 if converter.forceFieldName == 'gaff':
                     ffprotein = 'amber99sb-ildn'
-                    #ffprotein = 'amber14sb'
                 elif converter.forceFieldName == 'cgenff':
                     ffprotein = 'charmm27'
-                    #ffprotein = 'charmm36-jul2021'
             else:
-                ffprotein = args.ffprotein
+                ffprotein = conf.ffprotein
 
-            if args.verbose:
-                print(args.ffprotein, 'ffprotein: ', ffprotein)
+            if conf.verbose:
+                print(conf.ffprotein, 'ffprotein: ', ffprotein)
 
-            if args.verbose:
+            if conf.verbose:
                 print('Generating %s parameters' % converter.forceFieldName)
             try:
                 converter.generate(inputFile = inMolecule, output = outputFile,
-                                   keepMol2Charges = args.retain_charges or args.charge_method,
+                                   keepMol2Charges = conf.retain_charges or conf.charge_method,
                                    netCharge = netCharge,
-                                   verbose = args.verbose)
+                                   verbose = conf.verbose)
             except Exception:
                 print('Error running generator for ' + converter.forceFieldName)
                 traceback.print_exc()
 
             try:
-                converter.convert2Gromacs(outputFile, args.verbose)
+                converter.convert2Gromacs(outputFile, conf.verbose)
             except Exception:
                 print('Error converting %s topology to GROMACS format.' % converter.forceFieldName)
                 traceback.print_exc()
                 continue
 
-            if args.calibration:
+            if conf.calibration:
                 try:
-                    calibrateVdW(outputFile, args.calibration, converter.forceFieldName,
-                                 args.water, args.charge_method, verbose = args.verbose)
+                    calibrateVdW(outputFile, conf.calibration, converter.forceFieldName,
+                                 conf.water, conf.charge_method, verbose = conf.verbose)
                 except Exception:
                     print('Error calibrating van der Waals parameters.')
                     traceback.print_exc()
 
             ffDir = outputFile + '_%s' % converter.forceFieldName
-            if args.verbose:
+            if conf.verbose:
                 print('ffDir: ', ffDir)
 
             if os.path.exists(ffDir):
                 outputFileBaseName = os.path.basename(outputFile)
-                if args.verbose:
+                if conf.verbose:
                     print('Generating %s topology' % converter.forceFieldName)
 
                 ffSpecificCoords = os.path.join(ffDir, outputFileBaseName + '.gro')
@@ -532,7 +566,7 @@ if __name__ == '__main__':
                     print('proteinCoords: ', proteinCoords)
                     if os.path.splitext(proteinCoords)[1].lower() != '.gro':
                         try:
-                            ffProteinTopology, ffProteinCoords, ffProteinPosre = converter.coordsToTopology(outputFile, proteinCoords, ffprotein, args.verbose)
+                            ffProteinTopology, ffProteinCoords, ffProteinPosre = converter.coordsToTopology(outputFile, proteinCoords, ffprotein, conf.verbose)
                         except Exception:
                             print('Error generating protein topology.')
                             traceback.print_exc()
@@ -541,13 +575,13 @@ if __name__ == '__main__':
                         ffProteinCoords = proteinCoords
                         ffProteinTopology = proteinTopology
                         ffProteinPosre = None
-                        copyItp(ffProteinTopology, ffDir, verbose = args.verbose)
-                        modproteinItp(ffProteinTopology, ffDir, verbose = args.verbose)
+                        copyItp(ffProteinTopology, ffDir, verbose = conf.verbose)
+                        modproteinItp(ffProteinTopology, ffDir, verbose = conf.verbose)
 
                     #ffSpecificCoords = os.path.join(ffDir, outputFileBaseName + '.gro')
 
-                    if args.verbose:
-                        print('Merging coordinates: ', ligandCoords, 'with', ffProteinCoords, 'to', ffSpecificCoords)
+                    if conf.verbose:
+                        print('Merging coordinates:', ligandCoords, 'with', ffProteinCoords, 'to', ffSpecificCoords)
                     try:
                         mergeCoordinateFiles(ligandCoords, ffProteinCoords, ffSpecificCoords)
                     except Exception:
@@ -556,24 +590,24 @@ if __name__ == '__main__':
                         continue
 
                 try:
-                    ligandTop = converter.genTop(outputFile, ffprotein, args.water,
-                                                 verbose = args.verbose)
+                    ligandTop = converter.genTop(outputFile, ffprotein, conf.water,
+                                                 verbose = conf.verbose)
                 except Exception:
                     print('Cannot generate topology for %s:' % converter.forceFieldName)
                     traceback.print_exc()
                     continue
 
                 try:
-                    converter.fixAssignment(outputFile, args.retain_charges or args.charge_method,
-                                            netCharge, spreadCharges = False, verbose = args.verbose)
+                    converter.fixAssignment(outputFile, conf.retain_charges or conf.charge_method,
+                                            netCharge, spreadCharges = False, verbose = conf.verbose)
                 except Exception:
                     print('Cannot fix Assignments:')
                     traceback.print_exc()
 
-                #if args.virtualhydrogens:
-                    #hydrogens2VirtualSites(ffDir, outputFileBaseName, verbose = args.verbose)
+                #if conf.virtualhydrogens:
+                    #hydrogens2VirtualSites(ffDir, outputFileBaseName, verbose = conf.verbose)
 
-                #generateLinearVirtualSites(ffDir, outputFileBaseName, verbose = args.verbose)
+                #generateLinearVirtualSites(ffDir, outputFileBaseName, verbose = conf.verbose)
 
                 #ffSpecificCoords = os.path.join(ffDir, outputFileBaseName + '.gro')
                 if not os.path.exists(ffSpecificCoords):
@@ -581,7 +615,7 @@ if __name__ == '__main__':
 
                 if proteinCoords:
                     outTop = os.path.join(ffDir, outputFileBaseName + '.top')
-                    if args.verbose:
+                    if conf.verbose:
                         print('OutTop:', outTop)
 
                     try:
@@ -591,9 +625,9 @@ if __name__ == '__main__':
                                 ffProteinTopology = None
 
                         if ffProteinTopology:
-                            splitTopologyToItp(ffProteinTopology, verbose = args.verbose)
+                            splitTopologyToItp(ffProteinTopology, verbose = conf.verbose)
                             mergeTopologyFiles(ligandTop, ffProteinTopology, outTop, 
-                                               verbose = args.verbose)
+                                               verbose = conf.verbose)
 
                             # Only calculate the total charge of the system once.
                             if totCharge == None:
@@ -604,20 +638,20 @@ if __name__ == '__main__':
                         traceback.print_exc()
                         continue
 
-                if args.water:
-                    if args.box_buffer > 0:
-                        solvateSystem(ffSpecificCoords, ffDir, outputFileBaseName, args.water,
-                        args.box_type, args.box_buffer, verbose = args.verbose)
+                if conf.water:
+                    if conf.box_buffer > 0:
+                        solvateSystem(ffSpecificCoords, ffDir, outputFileBaseName, conf.water,
+                        conf.box_type, conf.box_buffer, verbose = conf.verbose)
 
                     if totCharge == None:
                         totCharge = netCharge
 
                     if totCharge:
                         neutraliseSystem(ffDir, outputFileBaseName, totCharge, 
-                                         args.pname, args.nname, verbose = args.verbose)
+                                         conf.pname, conf.nname, verbose = conf.verbose)
 
                 try:
-                    makeIndexRun(ffDir, outputFileBaseName, verbose = args.verbose)
+                    makeIndexRun(ffDir, outputFileBaseName, verbose = conf.verbose)
                 except Exception as e:
                     print('Cannot make index file:')
                     traceback.print_exc()
@@ -648,4 +682,11 @@ if __name__ == '__main__':
 
     print('Finished processing molecule')
 
-    sys.exit(0)
+def main():
+    args = get_parser()
+    print(args)
+
+    stage3_exec(args)
+
+if __name__ == "__main__":
+    main()

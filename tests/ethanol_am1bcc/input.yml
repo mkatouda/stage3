@@ -1,0 +1,5 @@
+ligand: './ethanol.mol'
+output: 'ethanol'
+ffligand: 'gaff'
+charge_method: 'am1bcc'
+verbose: True

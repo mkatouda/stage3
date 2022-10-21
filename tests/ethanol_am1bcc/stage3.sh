@@ -2,7 +2,7 @@
 
 ligand=ethanol.mol
 outbasename=ethanol
-ff=gaff #gaff cgenff
+ffligand=gaff #gaff cgenff
 charge=am1bcc #hf, am1bcc-pol
 
 
@@ -23,7 +23,8 @@ GMX_BIN=${HOME}/data/bin/x86_64/gromacs/2021.4/cpu/gcc/bin
 
 rm -rf ./${outbasename}_${ff}
 
-stage3 -i ${ligand} -o ${outbasename} -v --forcefields ${ff} -q ${charge}
+stage3 -l ${ligand} -o ${outbasename} -v --ffligand ${ffligand} -q ${charge}
+#stage3 -i input.yml
 
 #cd ${outbasename}_${ff}
 

@@ -1,0 +1,6 @@
+ligand: './ethanol.mol'
+output: 'ethanol-wat'
+ffligand: 'gaff'
+charge_method: 'am1bcc'
+water: 'tip3p'
+verbose: True

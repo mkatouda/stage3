@@ -32,7 +32,7 @@ if [ -d ./${outbasename}_${ff_ligand} ]; then
 fi
 
 # Run STaGE3
-stage3 -i ${ligand} -o ${outbasename} --forcefields ${ff_ligand} -q ${charge_model} -c ${protein} -b ${box_type} -d ${box_buff} -w ${water_model} --ffprotein ${ff_protein} --pname ${pname} --nname ${nname} -v
+stage3 -l ${ligand} -o ${outbasename} --ffligand ${ff_ligand} -q ${charge_model} -c ${protein} -b ${box_type} -d ${box_buff} -w ${water_model} --ffprotein ${ff_protein} --pname ${pname} --nname ${nname} -v
 
 cd ${outbasename}_${ff_ligand}
 

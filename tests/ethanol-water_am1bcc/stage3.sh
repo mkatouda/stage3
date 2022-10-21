@@ -2,7 +2,7 @@
 
 ligand=ethanol.mol
 outbasename=ethanol-wat
-ff=gaff #gaff cgenff
+ffligand=gaff #gaff cgenff
 charge=am1bcc #hf, am1bcc-pol
 water=tip3p
 
@@ -19,11 +19,11 @@ GMX_BIN=${HOME}/data/bin/x86_64/gromacs/2021.4/cpu/gcc/bin
 #export PATH=${PATH}:/home/app/a/GAMESS-20170420
 #export GMXLIB=${HOME}/param/gromacs/top
 
-templatepath=${HOME}/work/kyoto_pro-lig_md_2021q4/stage3/templates
+#templatepath=${HOME}/work/kyoto_pro-lig_md_2021q4/stage3/templates
 
 rm -rf ./${outbasename}_${ff}
 
-stage3 -i ${ligand} -o ${outbasename} -v --forcefields ${ff} -q ${charge} -w ${water}
+stage3 -l ${ligand} -o ${outbasename} -v --ffligand ${ffligand} -q ${charge} -w ${water}
 
 #cd ${outbasename}_${ff}
 

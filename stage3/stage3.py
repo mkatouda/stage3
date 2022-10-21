@@ -366,7 +366,6 @@ def set_config(args):
     # Set up default config values from program arguments
     conf_def = vars(args).copy()
     del conf_def['inp']
-    conf_def = {k: v for k, v in conf_def.items()}
     [conf.setdefault(k, v) for k, v in conf_def.items()]
 
     return conf

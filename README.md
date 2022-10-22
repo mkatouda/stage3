@@ -1,6 +1,6 @@
 # STaGE3 (Small molecule Topology GEnerator for python 3) 
 
-STaGE3 is the automatic GROMACS Topology Generation tool of organic molecules using the GAFF, OPLS-AA, and CGenFF force fields.  
+STaGE3 is the automatic GROMACS Topology Generation tool of organic molecules using the GAFF and CGenFF force fields.  
 STaGE3 is the python 3 port of STaGE (https://gitlab.com/gromacs/stage).  
 If you use STaGE3, please cite original paper: Lundborg M., Lindahl E. Automatic GROMACS TopologyGeneration and Comparisons of 
 Force Fields for Solvation Free Energy Calculations. J. Phys. Chem. B. 2014, DOI: 10.1021/jp505332p

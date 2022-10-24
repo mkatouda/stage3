@@ -7,7 +7,7 @@ inparameters:
             command line parameters:
             1            charmm topology file
             2            corresponding charmm parameter file
-            3    opt        foldername, default cgenff.ff
+            3    opt        foldername, default cgenff-2b7.ff
 
 outfiles:
             1            foldername/atomtypes.atp
@@ -25,6 +25,28 @@ import sys
 import math
 import re
 import os
+import argparse
+
+def get_parser():
+    parser = argparse.ArgumentParser(
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        description='Script for parsing charmm force field to gromacs format'
+    )
+    parser.add_argument(
+        'topfile', type=str,
+        help = 'charmm topology file'
+    )
+    parser.add_argument(
+        'parfile', type=str,
+        help = 'corresponding charmm parameter file'
+    )
+    parser.add_argument(
+        '-f', '--foldername', type=str, default='cgenff-2b7.ff',
+        help = 'foldername, default cgenff-2b7.ff'
+    )
+    args = parser.parse_args()
+
+    return args
 
 def main():
 
@@ -32,16 +54,15 @@ def main():
     # System parameters
     #------------------
 
+    args = get_parser()
+
     # infiles
-    parFile = open(sys.argv[2], 'r')
-    topFile = open(sys.argv[1], 'r')
+    parFile_path = os.path.abspath(args.parfile)
+    parFile = open(parFile_path, 'r')
+    topFile_path = os.path.abspath(args.topfile)
+    topFile = open(topFile_path, 'r')
     # test to see if there's a name specified
-    if len(sys.argv)>3:
-        ffName = sys.argv[3]
-        print('Creating '+ffName+' files...')
-    # if not, use cgenff
-    else:
-        ffName = 'cgenff-2b7.ff'
+    ffName = args.foldername
     print('Creating '+ffName+' files...')
 
     # conversion constant between kcal and kJ
@@ -79,7 +100,7 @@ def main():
             genCMAP = False
     topFile.close()
 
-    topFile = open(os.path.abspath(sys.argv[1]), 'r')
+    topFile = open(topFile_path, 'r')
 
     # set the func parameter for bonds, angles and proper/improper dihedrals
     # for further information see section 5.3.2 in gromacs documentation:

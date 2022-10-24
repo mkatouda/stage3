@@ -26,6 +26,15 @@ if not isInPath('gmx'):
         gmxSuffix = '_mpi'
 else:
     gmxSuffix = ''
+if isInPath('acpype'):
+    acpypeBinary='acpype'
+elif isInPath('run_acpype.py'):
+    acpypeBinary='run_acpype.py'
+elif isInPath('acpype.py'):
+    acpypeBinary='acpype.py'
+else:
+    print('Cannot find acpype')
+    exit(1)
 
 class GaffForceFieldPlugin(ForceFieldPlugin):
 
@@ -142,15 +151,15 @@ class GaffForceFieldPlugin(ForceFieldPlugin):
         verbose is True more detailed output will be given. """
 
         oldFiles = glob(output + '_AC.*')
-        if os.path.isfile(output + '_bcc_gaff.mol2'):
-            oldFiles.append(output + '_bcc_gaff.mol2')
+        if os.path.isfile(output + '_bcc_' + self.forceFieldName + '.mol2'):
+            oldFiles.append(output + '_bcc_' + self.forceFieldName + '.mol2')
         for f in oldFiles:
             os.remove(f)
 
         outputFileBaseName = os.path.basename(output)
         print('acpype outputFileBaseName: ', outputFileBaseName)
 
-        acpypeCmd = ['acpype', '-i', inputFile, '-b', outputFileBaseName, '-o', 'gmx']
+        acpypeCmd = ['acpype', '-i', inputFile, '-b', outputFileBaseName, '-o', 'gmx', '-a', self.forceFieldName]
         if keepMol2Charges:
             acpypeCmd += ['-c', 'user']
             netCharge = None

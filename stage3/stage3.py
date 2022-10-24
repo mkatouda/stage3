@@ -319,6 +319,10 @@ def get_parser():
         '"opc", "spce", "tip4pew", "spc" or "tip3p".'
     )
     parser.add_argument(
+        '--conc', type=str, default=0.0,
+        help = 'Specify salt concentration (mol/liter).'
+    )
+    parser.add_argument(
         '--pname', type=str, default='NA',
         help = 'Name of the positive counter ion in Solvent.'
     )
@@ -373,7 +377,7 @@ def set_config(args):
 def stage3_run(ligand, smiles, output, ffligand, ffprotein, calibration, 
                keep_ligand_name, ph, retain_charges, charge_method, charge_multiplier,
                mergecoordinates, mergetopology, box_type, box_buffer,
-               water, pname, nname, verbose=False):
+               water, conc, pname, nname, verbose=False):
 
     if mergecoordinates:
         proteinCoords = os.path.abspath(mergecoordinates)
@@ -694,8 +698,8 @@ def stage3_run(ligand, smiles, output, ffligand, ffprotein, calibration,
                     if totCharge == None:
                         totCharge = netCharge
 
-                    if totCharge:
-                        neutraliseSystem(ffDir, outputFileBaseName, totCharge, 
+                    if totCharge or conc > 0.0:
+                        neutraliseSystem(ffDir, outputFileBaseName, conc, 
                                          pname, nname, verbose = verbose)
 
                 try:
@@ -748,6 +752,7 @@ def stage3_main(conf):
     box_type = conf['box_type']
     box_buffer = conf['box_buffer']
     water = conf['water']
+    conc = conf['conc']
     pname = conf['pname']
     nname = conf['nname']
     verbose = conf['verbose']
@@ -755,7 +760,7 @@ def stage3_main(conf):
     stage3_run(ligand, smiles, output, ffligand, ffprotein, calibration, 
                keep_ligand_name, ph, retain_charges, charge_method, charge_multiplier,
                mergecoordinates, mergetopology, box_type, box_buffer,
-               water, pname, nname, verbose)
+               water, conc, pname, nname, verbose)
 
 def main():
     args = get_parser()

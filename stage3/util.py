@@ -447,7 +447,8 @@ def runGamess(name, netCharge, suffix = '', gamessResultsFile = None, outputDir 
         os.chdir(currDir)
         return False
 
-    templateDir = os.path.join(os.path.dirname(__file__), '..', 'templates')
+    #templateDir = os.path.join(os.path.dirname(__file__), '..', 'templates')
+    templateDir = os.path.join(os.path.dirname(__file__), 'templates')
     templateFileName = os.path.join(templateDir, 'gamess' + suffix + '.inp')
 
     with open(templateFileName) as f:
@@ -548,7 +549,8 @@ def runGaussian(name, netCharge, multiplier, suffix = '', gaussianResultsFile = 
         os.chdir(currDir)
         return False
 
-    templateDir = os.path.join(os.path.dirname(__file__), '..', 'templates')
+    #templateDir = os.path.join(os.path.dirname(__file__), '..', 'templates')
+    templateDir = os.path.join(os.path.dirname(__file__), 'templates')
     templateFileName = os.path.join(templateDir, 'gaussian' + suffix + '.com')
 
     with open(templateFileName) as f:
@@ -2101,7 +2103,8 @@ def runPreMinimization(outputDir, outputFileBaseName, verbose = False):
     groFileName = outputFileBaseName + '.gro'
     if not os.path.exists(groFileName):
         groFileName = os.path.join('..', outputFileBaseName + '.gro')
-    templateDir = os.path.join(os.path.dirname(__file__), '..', 'templates')
+    #templateDir = os.path.join(os.path.dirname(__file__), '..', 'templates')
+    templateDir = os.path.join(os.path.dirname(__file__), 'templates')
     templateFileName = os.path.join(templateDir, 'premin_template.mdp')
 
     gromppCommand = ['gmx'+gmxSuffix, 'grompp', '-f', templateFileName, '-p', topologyFileName,
@@ -2220,16 +2223,18 @@ def solvateSystem(groFile, outputDir, outputFileBaseName, solvent, boxType = 'do
     if os.path.exists('temp.top') and abs(os.path.getmtime('temp.top') - time.time()) < 5:
         shutil.move('temp.top', topologyFileName)
 
-def neutraliseSystem(outputDir, outputFileBaseName, systemNetCharge, pname = 'NA', nname = 'CL',
+#def neutraliseSystem(outputDir, outputFileBaseName, systemNetCharge, pname = 'NA', nname = 'CL',
+def neutraliseSystem(outputDir, outputFileBaseName, conc = 0.0, pname = 'NA', nname = 'CL',
                      verbose = False):
     """ Neutralise a solvated system by adding ions to counter the net charge """
 
     topologyFileName = os.path.join(outputDir, outputFileBaseName + '.top')
-    templateDir = os.path.join(os.path.dirname(__file__), '..', 'templates')
+    #templateDir = os.path.join(os.path.dirname(__file__), '..', 'templates')
+    templateDir = os.path.join(os.path.dirname(__file__), 'templates')
     templateFileName = os.path.join(templateDir, 'genion_template.mdp')
 
-    if verbose:
-        print('Net charge: %d. Neutralising system by adding ions.' % systemNetCharge)
+    #if verbose:
+    #    print('Net charge: %d. Neutralising system by adding ions.' % systemNetCharge)
 
     fileNameAlts = ['solvated', outputFileBaseName]
     for fileName in fileNameAlts:
@@ -2271,11 +2276,12 @@ def neutraliseSystem(outputDir, outputFileBaseName, systemNetCharge, pname = 'NA
         shutil.move('temp.top', topologyFileName)
 
     genionCommand = ['gmx'+gmxSuffix, 'genion', '-s', tprFileName, '-p', topologyFileName, '-o',
-    ionisedFileName]
-    if systemNetCharge < 0:
-        genionCommand += ['-np', '%d' % abs(round(systemNetCharge)), '-pname', pname]
-    else:
-        genionCommand += ['-nn', '%d' % abs(round(systemNetCharge)), '-nname', nname]
+                     ionisedFileName, '-conc', '%f' % conc, '-neutral', '-pname', pname, '-nname', nname]
+    #                 ionisedFileName]
+    #if systemNetCharge < 0:
+    #    genionCommand += ['-np', '%d' % abs(round(systemNetCharge)), '-pname', pname]
+    #else:
+    #    genionCommand += ['-nn', '%d' % abs(round(systemNetCharge)), '-nname', nname]
 
     if verbose:
         print(' '.join(genionCommand))

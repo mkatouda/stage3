@@ -1905,7 +1905,8 @@ def makeIndexRun(outputDir, outputFileBaseName, verbose = False):
 
     indexFileName = os.path.join(outputDir, 'index.ndx')
     # Try to find a suitable coordinate file to use
-    fileAlts = ['solvated_ionised.gro', 'solvated.gro', 'box.gro', outputFileBaseName+'.gro']
+    fileAlts = [outputFileBaseName + '_solvated_ionised.gro', outputFileBaseName + '_solvated.gro',
+                outputFileBaseName + '_box.gro', outputFileBaseName + '.gro']
 
     for alt in fileAlts:
         coordsFile = os.path.join(outputDir, alt)
@@ -2158,8 +2159,8 @@ def solvateSystem(groFile, outputDir, outputFileBaseName, solvent, boxType = 'do
 
     topologyFileName = os.path.join(outputDir, outputFileBaseName + '.top')
 
-    boxFileName = os.path.join(outputDir, 'box.gro')
-    solvatedFileName = os.path.join(outputDir, 'solvated.gro')
+    boxFileName = os.path.join(outputDir, outputFileBaseName + '_box.gro')
+    solvatedFileName = os.path.join(outputDir, outputFileBaseName + '_solvated.gro')
 
     editConfCommand = ['gmx'+gmxSuffix, 'editconf', '-f', groFile, '-o', boxFileName,
     '-bt', boxType, '-d', '%.2f' % bufferDist]
@@ -2236,7 +2237,7 @@ def neutraliseSystem(outputDir, outputFileBaseName, conc = 0.0, pname = 'NA', nn
     #if verbose:
     #    print('Net charge: %d. Neutralising system by adding ions.' % systemNetCharge)
 
-    fileNameAlts = ['solvated', outputFileBaseName]
+    fileNameAlts = [outputFileBaseName + '_solvated', outputFileBaseName]
     for fileName in fileNameAlts:
         solvatedFileName = os.path.join(outputDir, fileName + '.gro')
         if os.path.exists(solvatedFileName):
@@ -2304,6 +2305,11 @@ def neutraliseSystem(outputDir, outputFileBaseName, conc = 0.0, pname = 'NA', nn
     # to replace the empty file.
     if os.path.exists('temp.top') and abs(os.path.getmtime('temp.top') - time.time()) < 5:
         shutil.move('temp.top', topologyFileName)
+
+    if os.path.exists(tprFileName): os.remove(tprFileName)
+    mdpFileName = os.path.join(outputDir, 'mdout.mdp')
+    if os.path.exists(mdpFileName): os.remove(mdpFileName)
+
 
 def getForceFieldCalibration(calibrationFileName, forceFieldName, solvent, chargeModel):
 

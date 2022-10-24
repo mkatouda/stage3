@@ -405,16 +405,16 @@ def stage3_run(ligand, smiles, output, ffligand, ffprotein, calibration,
     chosenForcefields = ffligand.lower().split(',')
     forcefields = list(chosenForcefields)
 
-    forcefieldsString = ['gaff', 'cgenff']
+    forcefieldsString = ['gaff', 'gaff2', 'cgenff']
     converters = []
     for forcefield in forcefields:
         if forcefield not in forcefieldsString:
             print('Force field %s is not available.' % forcefield)
             sys.exit(1)
-        elif forcefield == 'gaff':
-            converter = GaffForceFieldPlugin()
+        elif 'gaff' in forcefield:
+            converter = GaffForceFieldPlugin(forcefield)
 #        elif forcefield == 'opls': # Warning: currently not available!
-#            converter = OplsForceFieldPlugin.GaffForceFieldPlugin()
+#            converter = OplsForceFieldPlugin()
         elif forcefield == 'cgenff':
             converter = CgenForceFieldPlugin()
         converters.append(converter)
@@ -554,7 +554,7 @@ def stage3_run(ligand, smiles, output, ffligand, ffprotein, calibration,
         # The gaff directory is automotically created when generating a OPLS topology.
         # If there was no gaff directory before and no GAFF topology is generated make sure
         # that this directory is removed at a later stage.
-        if os.path.exists(outputFile + '_gaff'):
+        if os.path.exists(outputFile + '_gaff') or os.path.exists(outputFile + '_gaff2'):
             gaffDidExist = True
         else:
             gaffDidExist = False
@@ -564,7 +564,7 @@ def stage3_run(ligand, smiles, output, ffligand, ffprotein, calibration,
                 continue
 
             if ffprotein is None:
-                if converter.forceFieldName == 'gaff':
+                if 'gaff' in converter.forceFieldName:
                     ffprotein = 'amber99sb-ildn'
                 elif converter.forceFieldName == 'cgenff':
                     ffprotein = 'charmm27'
@@ -710,7 +710,7 @@ def stage3_run(ligand, smiles, output, ffligand, ffprotein, calibration,
 
             # If we are not generating an opls topology remove the automatically generated
             # opls directory.
-            if converter.forceFieldName == 'gaff' and 'opls' not in chosenForcefields and not oplsDidExist:
+            if 'gaff' in converter.forceFieldName and 'opls' not in chosenForcefields and not oplsDidExist:
                 try:
                     shutil.rmtree(outputFile + '_opls')
                 except Exception:
@@ -724,6 +724,12 @@ def stage3_run(ligand, smiles, output, ffligand, ffprotein, calibration,
                     shutil.rmtree(outputFile + '_gaff')
                 except Exception:
                     print('Error removing GAFF directory')
+                    traceback.print_exc()
+            elif converter.forceFieldName == 'opls' and 'gaff2' not in chosenForcefields and not gaffDidExist:
+                try:
+                    shutil.rmtree(outputFile + '_gaff2')
+                except Exception:
+                    print('Error removing GAFF2 directory')
                     traceback.print_exc()
 
             try:

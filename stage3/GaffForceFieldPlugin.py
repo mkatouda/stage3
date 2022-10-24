@@ -26,6 +26,7 @@ if not isInPath('gmx'):
         gmxSuffix = '_mpi'
 else:
     gmxSuffix = ''
+
 if isInPath('acpype'):
     acpypeBinary='acpype'
 elif isInPath('run_acpype.py'):
@@ -38,9 +39,9 @@ else:
 
 class GaffForceFieldPlugin(ForceFieldPlugin):
 
-    def __init__(self):
+    def __init__(self, forcefield='gaff'):
 
-        self.forceFieldName = "gaff"
+        self.forceFieldName = forcefield
         self.order = 1
 
     def _postGenerateClean(self, output, removeFiles = True):

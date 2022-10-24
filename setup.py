@@ -9,6 +9,7 @@ setup(
     entry_points={
         'console_scripts': [
             'stage3=stage3.stage3:main',
+            'xvg2yavg=stage3.xvg2yavg:main'
         ],
     },
     include_package_data=True,

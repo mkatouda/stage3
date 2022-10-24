@@ -1,18 +1,35 @@
 #!/usr/bin/env python
-import sys
 import os
 import re
+import argparse
 import matplotlib.pyplot as plt
+
+def get_parser():
+    parser = argparse.ArgumentParser(
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        description='convert Gromacs xvg file to csv file, draw graph, and get avarage'
+    )
+    parser.add_argument(
+        'xvg', type=str,
+        help = 'input Gromacs xvg flie'
+    )
+    parser.add_argument(
+        'out', type=str,
+        help = 'output avarage score flie'
+    )
+    args = parser.parse_args()
+
+    return args
 
 def plot2d(x, y, xlabel, ylabel, label, pngfile):
     fig = plt.figure(figsize=(12, 8))
-
     ax = fig.add_subplot(111)
     ax.plot(x, y, label=label)
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
-
-    fig.savefig(pngfile)
+    plt.savefig(pngfile)
+    plt.clf()
+    plt.close()
 
 def xvg_yavg(xvgfile):
     with open(xvgfile) as fin:
@@ -38,7 +55,15 @@ def xvg_yavg(xvgfile):
     #for i in range(len(x)):
     #    print(x[i], y[i])
 
+    s = '{},{}\n'.format(xlabel, ylabel)
+    for i in range(len(x)):
+        s += '{},{}\n'.format(x[i], y[i])
+
     basename = os.path.splitext(os.path.basename(xvgfile))[0]
+    csvfile = basename + '.csv'
+    with open(csvfile, 'w') as f:
+        f.write(s)
+
     pngfile = basename + '.png'
     plot2d(x, y, xlabel, ylabel, title, pngfile)
 
@@ -48,12 +73,13 @@ def xvg_yavg(xvgfile):
     return yavg
 
 def main():
-    xvgfile = sys.argv[1]
-    outfile = sys.argv[2]
-    yavg = xvg_yavg(xvgfile)
-    if len(sys.argv) >= 2:
-        with open(outfile, 'w') as f:
-            f.write(str(yavg))
+    args = get_parser()
+    print(args)
 
-if __name__ == "__main__":
+    xvgfile = args.xvg
+    outfile = args.out
+    with open(outfile, 'w') as f:
+        f.write(str(xvg_yavg(xvgfile)))
+
+if __name__ == '__main__':
     main()

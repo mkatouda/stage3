@@ -9,6 +9,7 @@ setup(
     entry_points={
         'console_scripts': [
             'stage3=stage3.stage3:main',
+            'charmm2gromacs=stage3.charmm2gromacs:main',
             'xvg2yavg=stage3.xvg2yavg:main'
         ],
     },

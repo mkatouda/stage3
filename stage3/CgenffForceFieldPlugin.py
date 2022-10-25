@@ -184,7 +184,8 @@ class CgenffForceFieldPlugin(ForceFieldPlugin):
         """ Run a script (by David van der Spoel) to convert a charmm topology to
         GROMACS format """
 
-        convCmd = [os.path.join(os.path.dirname(__file__), '..', 'charmm2gromacs-pvm.py')]
+        #convCmd = [os.path.join(os.path.dirname(__file__), '..', 'charmm2gromacs-pvm.py')]
+        convCmd = ['charmm2gromacs']
         convCmd += [output + '.rtf', output + '.prm', output + '_%s' % self.forceFieldName]
 
         if verbose:

@@ -1,22 +1,22 @@
 # STaGE3 (Small molecule Topology GEnerator for python 3) 
 
-STaGE3 is the automatic GROMACS Topology Generation tool of organic molecules using the GAFF and CGenFF force fields.  
-STaGE3 is the python 3 port of STaGE (https://gitlab.com/gromacs/stage).  
-If you use STaGE3, please cite original paper: Lundborg M., Lindahl E. Automatic GROMACS TopologyGeneration and Comparisons of 
-Force Fields for Solvation Free Energy Calculations. J. Phys. Chem. B. 2014, DOI: 10.1021/jp505332p
+STaGE3 is the automatic GROMACS Topology Generation tool of small organic molecules using the GAFF and CGenFF force fields with receptor system such as proteins or macro molecules.  
+STaGE3 is the python 3 fork of STaGE (https://gitlab.com/gromacs/stage) with some update improving usability.    
+If you use STaGE3, please cite original paper: Lundborg M., Lindahl E. Automatic GROMACS TopologyGeneration and Comparisons of Force Fields for Solvation Free Energy Calculations. J. Phys. Chem. B. 2014, DOI: 10.1021/jp505332p
 
 ## Licence
 GNU GPLv3
 
 ## Required software
 
-STaGE3 also depends on a number of other softwares, some of which can should be installed seperately.  
-They are:  
+STaGE3 also depends on a number of other softwares, some of which can should be installed seperately. They are:  
+
 - Required  
 1. Antechamber (part of Ambertools, available after filling in form at http://ambermd.org/AmberTools-get.html )  
 2. acpype (https://alanwilter.github.io/acpype/)
 3. openbabel (http://openbabel.org/wiki/Main_Page)  
 4. gromacs (https://www.gromacs.org/) 
+
 - Optional  
 5. MATCH (available after filling in form at http://brooks.chem.lsa.umich.edu/index.php?page=registerSoftware&subdir=articles/resources/software&link=%3Ca%20href=%22downloads/MATCH_RELEASE.tar.gz%22%3EVersion%201.000%3C/a%3E&name=MATCH ) 
 6. Amsol (available after filling in form at http://t1.chem.umn.edu/license/form-user.html )  
@@ -137,36 +137,79 @@ optional arguments:
 
 </pre>
 
-## Exmaples of usage
+## Exmaples of command line usage
 
-Generates parameters for ethanol using mol file as input for all available force fields using the default charge methods.  
+### Simple small molecule
+
+Generates MD input files for ethanol using mol file as input for all available force fields using the default charge methods.  
 
 <pre>
-stage3 -i ethanol.mol -o ethanol
+stage3 -l ethanol.mol -o ethanol
 </pre>
 
-Generates parameters for ethanol using a mol2 file as input and retaining all the partial charges that were specified in the mol2 file.  
+### Simple small molecule given user determied partial charges
+
+Generates MD input files for ethanol using a mol2 file as input and retaining all the partial charges that were specified in the mol2 file.  
 
 <pre>
 stage3 -i ethanol.mol2 -o ethanol -r
 </pre>
 
-Generates parameters for water solvated ethanol using mol file as input.
-GAFF with B3LYP/PCM charge method, which runs GAMESS/US to calculate the charges and can take a long time, is used.
+### Small molecule with B3LYP/PCM charge in water
+
+Generates MD input files for water solvated ethanol using mol file as input.  
+GAFF with B3LYP/PCM charge method, which runs GAMESS/US to calculate the charges and can take a long time, is used.  
 Mininum distance of 1.2 nm from the solute to the edge of the dodecahedron periodic box. TIP3P water model is used.  
 
 <pre>
-stage3 -i ethanol.mol -o ethanol_solvated --ffligand gaff -q b3lyp/pcm -w tip3p -b dodecahedron -d 1.2
+stage3 -l ethanol.mol -o ethanol_solvated --ffligand gaff -q b3lyp/pcm -w tip3p -b dodecahedron -d 1.2
 </pre>
 
-Generates parameters for water solvated protein-ligand complex using protein pdb file and ligand mol file as input.
-GAFF2 with AM1-BCC charge method and AMBER99SB-ILDN force fields are used for ligand and protein, respectively.
-Mininum distance of 1.0 nm from the solute to the edge of the cubic periodic box.
+### Protein-ligand binding system
+
+Generates MD input files for water solvated protein-ligand complex using protein pdb file and ligand mol file as input.  
+GAFF2 with AM1-BCC charge method and AMBER99SB-ILDN force fields are used for ligand and protein, respectively.  
+Mininum distance of 1.0 nm from the solute to the edge of the cubic periodic box.  
 TIP3P water model is used and the system is neutralized adding charged counter ions (K+) or (Cl-).  
 
 <pre>
-stage3 -i ligand.mol -c protein.pdb -o protein_ligand_solvated --ffligand gaff2 -q am1bcc --ffprotein charmm27 -w tip3p -b cubic -d 1.0 --pname K --nname CL
+stage3 -l ligand.mol -c protein.pdb -o protein_ligand_solvated --ffligand gaff2 -q am1bcc --ffprotein charmm27 -w tip3p -b cubic -d 1.0 --pname K --nname CL
 </pre>
+
+## Exmaples of yaml input usage
+
+### Protein-ligand binding system
+
+Generates MD input files for water solvated protein-ligand complex using protein pdb file and ligand mol file as input.  
+GAFF2 with AM1-BCC charge method and AMBER99SB-ILDN force fields are used for ligand and protein, respectively.  
+Mininum distance of 1.0 nm from the solute to the edge of the cubic periodic box.  
+
+Prepare input yaml file input.yml:
+
+<pre>
+ligand: './jz4.mol'
+mergecoordinates: './3HTB_protein.pdb'
+output: '3HTB-jz4-wat'
+ffligand: 'gaff'
+ffpritein: 'amber99sb-ildn'
+charge_method: 'am1bcc'
+water: 'tip3p'
+box_type: 'dodecahedron'
+box_buff: 1.0
+conc: 0.1
+pname: 'NA'
+nname: 'CL'
+verbose: True
+</pre>
+
+Then, run vina command line:
+
+<pre>
+stage3 -i input.yml
+</pre>
+
+Keywards of yaml file are the same in the name of command line options.  
+See above explation of command line options.  
 
 ## Author
 Michio Katouda (katouda@rist.or.jp)  

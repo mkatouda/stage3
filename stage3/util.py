@@ -2431,3 +2431,52 @@ def calibrateVdW(outputDir, calibrationFileName, forceFieldName, solvent = None,
     with open(itpFileName, 'w') as f:
         for line in lines:
             f.write(line)
+
+def convertGmx2Amb(outputDir, outputFileBaseName, verbose = False):
+    """ Run make_ndx to create an index file """
+    import parmed as pmd
+
+    topFile = os.path.join(outputDir, outputFileBaseName + '.top')
+    # Try to find a suitable coordinate file to use
+    fileAlts = [outputFileBaseName + '_solvated_ionised.gro', outputFileBaseName + '_solvated.gro',
+                outputFileBaseName + '_box.gro', outputFileBaseName + '.gro']
+
+    for alt in fileAlts:
+        coordsFile = os.path.join(outputDir, alt)
+        if verbose:
+            print('Searching for %s as .gro file for generating index.' % coordsFile)
+        if os.path.exists(coordsFile):
+            if verbose:
+                print('Found gro file %s.' % coordsFile)
+            break
+    else:
+        if verbose:
+            print('Cannot find .gro file for generating index file. Searching in parent directory.')
+        for alt in fileAlts:
+            coordsFile = os.path.join(outputDir, '..', alt)
+            if os.path.exists(coordsFile):
+                break
+        else:
+            print('Cannot find .gro coordinate file for generating index file.')
+            return
+
+    if verbose:
+        print('Coordinate file from %s' % coordsFile)
+        print('Topology file from %s' % topFile)
+
+    gmx_top = pmd.load_file(topFile, xyz=coordsFile)
+    # Write Amber coordinate and topology files
+    coordsFile_save = os.path.splitext(coordsFile)[0] + '.inpcrd'
+    topFile_save = os.path.splitext(topFile)[0] + '.prmtop'
+    print('Coordinate file to %s' % coordsFile_save)
+    print('Topology file to  %s' % topFile_save)
+    gmx_top.save(coordsFile_save, format='rst7', overwrite=True)
+    gmx_top.save(topFile_save, format='amber', overwrite=True)
+
+    # Write Charmm coordinate and topology files
+    #coordsFile_save = os.path.splitext(coordsFile)[0] + '.crd'
+    #topFile_save = os.path.splitext(topFile)[0] + '.psf'
+    #print('Coordinate file to %s' % coordsFile_save)
+    #print('Topology file to  %s' % topFile_save)
+    #gmx_top.save(coordsFile_save, format='charmmcrd', overwrite=True)
+    #gmx_top.save(topFile_save, format='psf', overwrite=True)

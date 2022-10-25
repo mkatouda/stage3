@@ -128,7 +128,7 @@ from .CgenffForceFieldPlugin import CgenffForceFieldPlugin
 from .ChargePlugin import ChargePlugin
 from .util import babelConvert, renameAtoms, mol2RenameToLig, getNetChargeOfMol2, makeRestraintsRun, getChargeOfTopology
 from .util import generateCharges, calibrateVdW, mergeCoordinateFiles, copyItp, modproteinItp, splitTopologyToItp, mergeTopologyFiles
-from .util import hydrogens2VirtualSites, generateLinearVirtualSites, solvateSystem, neutraliseSystem, makeIndexRun
+from .util import hydrogens2VirtualSites, generateLinearVirtualSites, solvateSystem, neutraliseSystem, makeIndexRun, convertGmx2Amb
 
 
 def _loadPlugins(path, name, baseclass):
@@ -708,6 +708,12 @@ def stage3_run(ligand, smiles, output, ffligand, ffprotein, calibration,
                     print('Cannot make index file:')
                     traceback.print_exc()
 
+                try:
+                    convertGmx2Amb(ffDir, outputFileBaseName, verbose = verbose)
+                except Exception as e:
+                    print('Cannot make Amber topology file:')
+                    traceback.print_exc()
+
             # If we are not generating an opls topology remove the automatically generated
             # opls directory.
             if 'gaff' in converter.forceFieldName and 'opls' not in chosenForcefields and not oplsDidExist:
@@ -731,7 +737,7 @@ def stage3_run(ligand, smiles, output, ffligand, ffprotein, calibration,
                 except Exception:
                     print('Error removing GAFF2 directory')
                     traceback.print_exc()
-
+           
             try:
                 converter.finalClean(outputFile)
             except Exception:

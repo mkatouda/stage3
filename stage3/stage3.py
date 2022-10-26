@@ -46,10 +46,14 @@
     gmx genrestr
     rungms
     gmstoresp.sh
+    g16
 
     The following environment variables must be set
 
     AMBERHOME
+
+    The following environment variables may be set when using optional programs
+
     MATCH
     PerlChemistry
 
@@ -62,8 +66,10 @@
                   GROMACS (pdb2gmx, make_ndx, genrestr, editconf, solvate (genbox), grompp and genion)
                   ACPYPE (for GAFF and OPLS)
                   AnteChamber (for GAFF and OPLS)
-                  MATCH (for CGENFF)
-                  GAMESS (for B3LYP/PCM partial charges)
+
+    Optional:     MATCH (for CGENFF)
+                  Gaussian (for HF/6-31G* RESP partial charges)
+                  GAMESS (for B3LYP/PCM partial charges: NYI)
                   gmstoresp.sh
 
 
@@ -126,9 +132,26 @@ from .GaffForceFieldPlugin import GaffForceFieldPlugin
 from .CgenffForceFieldPlugin import CgenffForceFieldPlugin
 #from .OplsForceFieldPlugin import OplsForceFieldPlugin
 from .ChargePlugin import ChargePlugin
+#from .GamessChargePlugin import GamessChargePlugin
+from .GaussianChargePlugin import GaussianChargePlugin
 from .util import babelConvert, renameAtoms, mol2RenameToLig, getNetChargeOfMol2, makeRestraintsRun, getChargeOfTopology
 from .util import generateCharges, calibrateVdW, mergeCoordinateFiles, copyItp, modproteinItp, splitTopologyToItp, mergeTopologyFiles
 from .util import hydrogens2VirtualSites, generateLinearVirtualSites, solvateSystem, neutraliseSystem, makeIndexRun, convertGmx2Amb
+
+
+forcefieldsString = ['gaff', 'gaff2', 'cgenff']
+standardChargeMethods = ['am1bcc', 'am1bcc-pol', 'mmff94', 'eem', 'qeq', 'qtpie']
+standardChargeMethodsHelp = ['am1bcc: AM1 with bond charge correction (antechamber)',
+                     'am1bcc-pol: STaGE\'s own more polarized bond charge correction (antechamber)',
+                     'mmff94: MMFF94 (Open Babel)',
+                     'eem: electronegativity equalization method (Open Babel)',
+                     'qeq: Assign QEq (charge equilibration) partial charges (Rappe and Goddard, 1991) (Open Babel)',
+                     'qtpie: Assign QTPIE (charge transfer, polarization and equilibration) partial charges (Chen and Martinez, 2007) (Open Babel)']
+extraChargeMethods = ['gaussian/hf']
+extraChargeMethodsHelp = ['gaussian/hf: Hatree-Fock/6-31G(d) basis set followed by RESP (Gaussian)']
+                          #'gamess/hf: Hatree-Fock/6-31G(d) basis set followed by RESP (GAMESS)',
+ChargeMethods = standardChargeMethods + extraChargeMethods
+ChargeMethodsHelp = standardChargeMethodsHelp + extraChargeMethodsHelp
 
 
 def _loadPlugins(path, name, baseclass):
@@ -177,32 +200,38 @@ def _loadPlugins(path, name, baseclass):
 
     return loadedPlugins
 
-def getChargeMethod():
-    progDir = os.path.dirname(__file__)
-    standardChargeMethods = ['am1bcc', 'am1bcc-pol', 'mmff94', 'eem', 'qeq', 'qtpie']
-    chargeMethodsHelp = ['am1bcc: AM1 with bond charge correction (antechamber)',
-                         'am1bcc-pol: STaGE\'s own more polarized bond charge correction (antechamber)',
-                         'mmff94: MMFF94 (Open Babel)',
-                         'eem: electronegativity equalization method (Open Babel)',
-                         'qeq: Assign QEq (charge equilibration) partial charges (Rappe and Goddard, 1991) (Open Babel)',
-                         'qtpie: Assign QTPIE (charge transfer, polarization and equilibration) partial charges (Chen and Martinez, 2007) (Open Babel)']
-
-    chargePlugins = _loadPlugins(os.path.join(progDir, 'plugins'), '*ChargePlugin.py', ChargePlugin)
-    chargePluginNameList = []
-    chargePluginsHelp = []
-    for pl in chargePlugins:
-        for method, description in pl.alternativeChargeMethods.items():
-            chargePluginNameList.append(method)
-            chargeMethodsHelp.append('%s: %s (%s)' % (method, description, pl.programName))
-
-    chargeMethodsList = standardChargeMethods + chargePluginNameList
-    print('chargeMethodsList: ', chargeMethodsList)
-
-    return chargeMethodsList
+#def getChargeMethod():
+#    progDir = os.path.dirname(__file__)
+#    standardChargeMethods = ['am1bcc', 'am1bcc-pol', 'mmff94', 'eem', 'qeq', 'qtpie']
+#    chargeMethodsHelp = ['am1bcc: AM1 with bond charge correction (antechamber)',
+#                         'am1bcc-pol: STaGE\'s own more polarized bond charge correction (antechamber)',
+#                         'mmff94: MMFF94 (Open Babel)',
+#                         'eem: electronegativity equalization method (Open Babel)',
+#                         'qeq: Assign QEq (charge equilibration) partial charges (Rappe and Goddard, 1991) (Open Babel)',
+#                         'qtpie: Assign QTPIE (charge transfer, polarization and equilibration) partial charges (Chen and Martinez, 2007) (Open Babel)']
+#
+#    chargePlugins = _loadPlugins(os.path.join(progDir, 'plugins'), '*ChargePlugin.py', ChargePlugin)
+#    chargePluginNameList = []
+#    chargePluginsHelp = []
+#    for pl in chargePlugins:
+#        for method, description in pl.alternativeChargeMethods.items():
+#            chargePluginNameList.append(method)
+#            chargeMethodsHelp.append('%s: %s (%s)' % (method, description, pl.programName))
+#
+#    chargeMethodsList = standardChargeMethods + chargePluginNameList
+#    print('chargeMethodsList: ', chargeMethodsList)
+#
+#    return chargeMethodsList
 
 def get_parser():
+    class customHelpFormatter(argparse.ArgumentDefaultsHelpFormatter,
+                              argparse.RawTextHelpFormatter):
+        pass
+
     parser = argparse.ArgumentParser(
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        #formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        #formatter_class=argparse.RawTextHelpFormatter,
+        formatter_class=customHelpFormatter,
         description='STaGE is a tool for generating GROMACS topologies '
         'of small molecules for different force fields (currently GAFF, OPLS-AA '
         'and CGenFF). It uses many external programs to perform its tasks, '
@@ -232,7 +261,7 @@ def get_parser():
     parser.add_argument(
         '--ffligand', type=str, default='gaff',
         help = 'Force fields to generate parameters for, specified as a '
-        'comma-separated string without spaces.'
+        'comma-separated string without spaces.' + ','.join(forcefieldsString)
     )
     parser.add_argument(
         '--ffprotein',
@@ -245,13 +274,13 @@ def get_parser():
     )
     parser.add_argument(
         '-k', '--keep_ligand_name', action='store_true',
-        help = 'Do not rename the ligand in the output files. '
-        'When doing e.g. solvation or binding free energy '
-        'it is convenient to always call the ligand the '
-        'same thing - in this case "LIG". If this option '
-        'is set the ligand name will not be changed to "LIG". '
-        'If you need to assign parameters to e.g. co-factors '
-        'it is good to keep their names to tell them apart '
+        help = 'Do not rename the ligand in the output files. \n'
+        'When doing e.g. solvation or binding free energy \n'
+        'it is convenient to always call the ligand the \n'
+        'same thing - in this case "LIG". If this option \n'
+        'is set the ligand name will not be changed to "LIG". \n'
+        'If you need to assign parameters to e.g. co-factors \n'
+        'it is good to keep their names to tell them apart \n'
         'from ligands.'
     )
     parser.add_argument(
@@ -272,9 +301,8 @@ def get_parser():
     parser.add_argument(
         '-q', '--charge_method', type=str, default='am1bcc',
         help = 'Use the specified charge method for all force fields.'
+        + '\n'.join(ChargeMethodsHelp) + '\n'
     )
-    #   choices = standardChargeMethods + chargePluginNameList,
-    #   help = 'Use the specified charge method for all force fields. ' + ', '.join(chargeMethodsHelp))
     parser.add_argument(
         '-f', '--charge_multiplier', type=float, default=1.0,
         help = 'Multiply partial charges with this factor. Can only be used '
@@ -284,11 +312,11 @@ def get_parser():
         '-c', '--mergecoordinates',
         help = 'Merge the created coordinates file (.gro) with an '
         'already existing coordinate file (.pdb or .gro), '
-        'e.g. for combining '
-        'ligand coordinates with protein coordinates. The generated topology '
-        'will contain both the ligand and the protein. If a .gro file of the '
-        'protein is provided and there exists a corresponding .top file that '
-        'toplogy file will be used for the protein, otherwise a new topology '
+        'e.g. for combining \n'
+        'ligand coordinates with protein coordinates. The generated topology \n'
+        'will contain both the ligand and the protein. If a .gro file of the \n'
+        'protein is provided and there exists a corresponding .top file that \n'
+        'toplogy file will be used for the protein, otherwise a new topology \n'
         'file is generated.'
     )
     parser.add_argument(
@@ -405,7 +433,6 @@ def stage3_run(ligand, smiles, output, ffligand, ffprotein, calibration,
     chosenForcefields = ffligand.lower().split(',')
     forcefields = list(chosenForcefields)
 
-    forcefieldsString = ['gaff', 'gaff2', 'cgenff']
     converters = []
     for forcefield in forcefields:
         if forcefield not in forcefieldsString:
@@ -422,8 +449,6 @@ def stage3_run(ligand, smiles, output, ffligand, ffprotein, calibration,
 
     if 'opls' in forcefields and not 'gaff' in forcefields:
         forcefields.append('gaff')
-
-    standardChargeMethods = ['am1bcc', 'am1bcc-pol', 'mmff94', 'eem', 'qeq', 'qtpie']
 
     if smiles:
         iBase, iFormat = None, 'smiles'
@@ -528,13 +553,21 @@ def stage3_run(ligand, smiles, output, ffligand, ffprotein, calibration,
                 if charge_method in standardChargeMethods:
                     generateCharges(inMolecule, charge_method, netCharge,
                                     multiplier = charge_multiplier, verbose = verbose)
-                else:
-                    for pl in chargePlugins:
-                        if charge_method in pl.alternativeChargeMethods:
-                            pl.generateCharges(inMolecule, charge_method, netCharge,
-                                               multiplier = charge_multiplier,
-                                               verbose = verbose)
-                            break
+                elif 'gaussian' in charge_method:
+                    GaussianChargePlugin().generateCharges(inMolecule, charge_method, netCharge,
+                                                         multiplier = charge_multiplier,
+                                                         verbose = verbose)
+                #elif 'gamess' in charge_method:
+                #    GamessChargePlugin().generateCharges(inMolecule, charge_method, netCharge,
+                #                                         multiplier = charge_multiplier,
+                #                                         verbose = verbose)
+                #else:
+                #    for pl in chargePlugins:
+                #        if charge_method in pl.alternativeChargeMethods:
+                #            pl.generateCharges(inMolecule, charge_method, netCharge,
+                #                               multiplier = charge_multiplier,
+                #                               verbose = verbose)
+                #            break
             except Exception:
                 print('Cannot generate charges:')
                 traceback.print_exc()

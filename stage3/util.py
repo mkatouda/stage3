@@ -129,7 +129,8 @@ def babelConvert(inputFile = None, outputFile = None, smiles = None, pH = None,
         binaryPath = 'obabel'
     else:
         progDir = os.path.dirname(__file__)
-        binaryPath = os.path.join(progDir, '..', 'external', 'openbabel', 'build', 'bin', 'obabel')
+        #binaryPath = os.path.join(progDir, '..', 'external', 'openbabel', 'build', 'bin', 'obabel')
+        binaryPath = os.path.join(progDir, 'external', 'openbabel', 'build', 'bin', 'obabel')
         if not isInPath(binaryPath):
             print('Cannot find openbabel binary')
             return []
@@ -485,7 +486,8 @@ def runGamess(name, netCharge, suffix = '', gamessResultsFile = None, outputDir 
         binaryPath = 'rungms'
     else:
         progDir = os.path.dirname(__file__)
-        binaryPath = os.path.join(progDir, '..', 'external', 'gamess', 'rungms')
+        #binaryPath = os.path.join(progDir, '..', 'external', 'gamess', 'rungms')
+        binaryPath = os.path.join(progDir, 'external', 'gamess', 'rungms')
         if not isInPath(binaryPath):
             print('Cannot find rungms binary')
             os.chdir(currDir)
@@ -574,9 +576,12 @@ def runGaussian(name, netCharge, multiplier, suffix = '', gaussianResultsFile = 
 
     if isInPath('g16'):
         binaryPath = 'g16'
+    elif isInPath('g09'):
+        binaryPath = 'g09'
     else:
         progDir = os.path.dirname(__file__)
-        binaryPath = os.path.join(progDir, '..', 'external', 'g16', 'rung16')
+        #binaryPath = os.path.join(progDir, '..', 'external', 'g16', 'rung16')
+        binaryPath = os.path.join(progDir, 'external', 'g16', 'rung16')
         if not isInPath(binaryPath):
             print('Cannot find g16 binary')
             os.chdir(currDir)
@@ -631,7 +636,8 @@ def runMakeresp(inFile, verbose = False):
         binaryPath = 'makeresp'
     else:
         progDir = os.path.dirname(__file__)
-        binaryPath = os.path.join(progDir, '..', 'external', 'makeresp', 'makeresp')
+        #binaryPath = os.path.join(progDir, '..', 'external', 'makeresp', 'makeresp')
+        binaryPath = os.path.join(progDir, 'external', 'makeresp', 'makeresp')
         if not isInPath(binaryPath):
             print('Cannot find makeresp binary')
             return False
@@ -680,7 +686,8 @@ def runGmstoresp(inFile, verbose = False):
         binaryPath = 'gmstoresp.sh'
     else:
         progDir = os.path.dirname(__file__)
-        binaryPath = os.path.join(progDir, '..', 'external', 'gmstoresp', 'gmstoresp.sh')
+        #binaryPath = os.path.join(progDir, '..', 'external', 'gmstoresp', 'gmstoresp.sh')
+        binaryPath = os.path.join(progDir, 'external', 'gmstoresp', 'gmstoresp.sh')
         if not isInPath(binaryPath):
             print('Cannot find gmstoresp.sh binary')
             return False
@@ -735,7 +742,8 @@ def generateCharges(inFile, method, netCharge, multiplier = 1.0, verbose = False
             print(e)
             print('Trying to continue anyhow.')
 
-        chargeSymPath = os.path.join(os.path.dirname(__file__), '..', 'external', 'chargesym.sh')
+        #chargeSymPath = os.path.join(os.path.dirname(__file__), '..', 'external', 'chargesym.sh')
+        chargeSymPath = os.path.join(os.path.dirname(__file__), 'external', 'chargesym.sh')
 
         command = [chargeSymPath]
         with open(antechamberFileName) as antechamberFile:
@@ -761,7 +769,8 @@ def generateCharges(inFile, method, netCharge, multiplier = 1.0, verbose = False
             for line in result:
                 antechamberFile.write(line)
 
-        parmFile = os.path.join(os.path.dirname(__file__), '..', 'ffOptimization', 'bcc-pol-parm.dat')
+        #parmFile = os.path.join(os.path.dirname(__file__), '..', 'ffOptimization', 'bcc-pol-parm.dat')
+        parmFile = os.path.join(os.path.dirname(__file__), 'ffOptimization', 'bcc-pol-parm.dat')
 
         command = ['am1bcc', '-i', antechamberFileName, '-o', antechamberFileName, '-j', '4', '-p', parmFile]
 

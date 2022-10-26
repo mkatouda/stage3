@@ -20,8 +20,7 @@ STaGE3 also depends on a number of other softwares, some of which can should be 
 - Optional  
 5. MATCH (available after filling in form at http://brooks.chem.lsa.umich.edu/index.php?page=registerSoftware&subdir=articles/resources/software&link=%3Ca%20href=%22downloads/MATCH_RELEASE.tar.gz%22%3EVersion%201.000%3C/a%3E&name=MATCH ) 
 6. Amsol (available after filling in form at http://t1.chem.umn.edu/license/form-user.html )  
-7. GAMESS/US (http://www.msg.ameslab.gov/gamess/License_Agreement.html)  
-8. Gaussian16 (https://gaussian.com/gaussian16/)  
+7. Gaussian 16 or Gaussian 09 (https://gaussian.com/gaussian16/)  
 
 ## Installation (Required)
 
@@ -102,6 +101,15 @@ optional arguments:
                         It is safer to provide correctly protonated input files. (default: None)  
   -r, --retain_charges  Keep the mol2 charges. (default: False)  
   -q CHARGE_METHOD, --charge_method CHARGE_METHOD  
+                        Use the specified charge method for all force fields.am1bcc: AM1 with bond charge correction (antechamber)  
+                        am1bcc-pol: STaGE's own more polarized bond charge correction (antechamber)  
+                        mmff94: MMFF94 (Open Babel)  
+                        eem: electronegativity equalization method (Open Babel)  
+                        qeq: Assign QEq (charge equilibration) partial charges (Rappe and Goddard, 1991) (Open Babel)  
+                        qtpie: Assign QTPIE (charge transfer, polarization and equilibration) partial charges (Chen and Martinez, 2007) (Open Babel)  
+                        gaussian/hf: Hatree-Fock/6-31G(d) basis set followed by RESP (Gaussian)  
+                         (default: am1bcc)  
+  -q CHARGE_METHOD, --charge_method CHARGE_METHOD  
                         Use the specified charge method for all force fields. (default: am1bcc)  
   -f CHARGE_MULTIPLIER, --charge_multiplier CHARGE_MULTIPLIER  
                         Multiply partial charges with this factor. Can only be used  
@@ -158,11 +166,11 @@ stage3 -i ethanol.mol2 -o ethanol -r
 ### Small molecule with B3LYP/PCM charge in water
 
 Generates MD input files for water solvated ethanol using mol file as input.  
-GAFF with B3LYP/PCM charge method, which runs GAMESS/US to calculate the charges and can take a long time, is used.  
+GAFF with Hatree-Fock 6-31G* charge method, which runs Gaussian to calculate the charges and can take a long time, is used.  
 Mininum distance of 1.2 nm from the solute to the edge of the dodecahedron periodic box. TIP3P water model is used.  
 
 <pre>
-stage3 -l ethanol.mol -o ethanol_solvated --ffligand gaff -q b3lyp/pcm -w tip3p -b dodecahedron -d 1.2
+stage3 -l ethanol.mol -o ethanol_solvated --ffligand gaff -q gaussian/hf -w tip3p -b dodecahedron -d 1.2
 </pre>
 
 ### Protein-ligand binding system
@@ -173,7 +181,8 @@ Mininum distance of 1.0 nm from the solute to the edge of the cubic periodic box
 TIP3P water model is used and the system is neutralized adding charged counter ions (K+) or (Cl-).  
 
 <pre>
-stage3 -l ligand.mol -c protein.pdb -o protein_ligand_solvated --ffligand gaff2 -q am1bcc --ffprotein charmm27 -w tip3p -b cubic -d 1.0 --pname K --nname CL
+stage3 -l ligand.mol -c protein.pdb -o protein_ligand_solvated --ffligand gaff2 -q am1bcc --ffprotein charmm27 \
+       -w tip3p -b cubic -d 1.0 --pname K --nname CL
 </pre>
 
 ## Exmaples of yaml input usage
@@ -202,7 +211,7 @@ nname: 'CL'
 verbose: True
 </pre>
 
-Then, run vina command line:
+Then, run stage3 in command line:
 
 <pre>
 stage3 -i input.yml

@@ -37,11 +37,12 @@ conda install -c conda-forge numpy ambertools acpype openbabel gromacs
 
 - Install STaGE3 from github  
 <pre>
-git clone https://github.com/mkatouda/stage3.git
+pip install git+https://github.com/mkatouda/stage3.git
 </pre>
 
 - Install STaGE3 from local repository  
-git pull https://github.com/mkatouda/stage3.git
+<pre>
+git clone https://github.com/mkatouda/stage3.git
 cd stage3
 pip install .
 </pre>

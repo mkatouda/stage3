@@ -165,7 +165,7 @@ Generates MD input files for ethanol using a mol2 file as input and retaining al
 stage3 -i ethanol.mol2 -o ethanol -r
 </pre>
 
-### Small molecule with B3LYP/PCM charge in water
+### Small molecule with HF/6-31G* charge in water
 
 Generates MD input files for water solvated ethanol using mol file as input.  
 GAFF with Hatree-Fock 6-31G* charge method, which runs Gaussian to calculate the charges and can take a long time, is used.  

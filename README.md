@@ -84,7 +84,8 @@ optional arguments:
                         Name of the output files (file extensions will be appended).   
                         (default: None)  
   --ffligand FFLIGAND   Force fields to generate parameters for, specified as  
-                        a comma-separated string without spaces. (default: gaff)  
+                        a comma-separated string without spaces:  
+                        gaff, gaff2, cgenff (default: gaff)  
   --ffprotein FFPROTEIN  
                         Force field of protein. (default: None)  
   -x CALIBRATION, --calibration CALIBRATION  
@@ -102,7 +103,8 @@ optional arguments:
                         It is safer to provide correctly protonated input files. (default: None)  
   -r, --retain_charges  Keep the mol2 charges. (default: False)  
   -q CHARGE_METHOD, --charge_method CHARGE_METHOD  
-                        Use the specified charge method for all force fields.am1bcc: AM1 with bond charge correction (antechamber)  
+                        Use the specified charge method for all force fields.  
+                        am1bcc: AM1 with bond charge correction (antechamber)  
                         am1bcc-pol: STaGE's own more polarized bond charge correction (antechamber)  
                         mmff94: MMFF94 (Open Babel)  
                         eem: electronegativity equalization method (Open Babel)  
@@ -128,17 +130,16 @@ optional arguments:
                         topology file. Must be used in combination with --mergecoordinates  
                         with a .gro file of the protein. (default: None)  
   -b BOX_TYPE, --box_type BOX_TYPE  
-                        Buffer from the solute to the edge of the dodecahedron shaped solvent  
-                        box. Set to 0 to disable solvation (and ionisation).  
-                        Default: dodecahedron (default: dodecahedron)  
+                        Type of simulation box: triclinic, cubic, dodecahedron, octahedron  
+                        (default: dodecahedron)  
   -d BOX_BUFFER, --box_buffer BOX_BUFFER  
                         Buffer from the solute to the edge of the solvent box.  
                         Set to 0 to disable solvation (and ionisation). (default: 1.0)
   -w WATER, --water WATER  
                         Solvent model to use in topology files. If not specified  
                         the solvent will not be specified in the topology.  
-                        Suggested water models are: "opc", "spce", "tip4pew", "spc" or  
-                        "tip3p". (default: None)  
+                        Suggested water models are:
+                        opc, spce, tip4pew, spc, tip3p (default: None)
   --conc CONC           Specify salt concentration (mol/liter). (default: 0.0)  
   --pname PNAME         Name of the positive counter ion in Solvent. (default: NA)  
   --nname NNAME         Name of the negative counter ion in Solvent. (default: CL)  
@@ -201,7 +202,7 @@ ligand: './jz4.mol'
 mergecoordinates: './3HTB_protein.pdb'
 output: '3HTB-jz4-wat'
 ffligand: 'gaff'
-ffpritein: 'amber99sb-ildn'
+ffprotein: 'amber99sb-ildn'
 charge_method: 'am1bcc'
 water: 'tip3p'
 box_type: 'dodecahedron'

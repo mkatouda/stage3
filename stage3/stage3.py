@@ -246,8 +246,8 @@ def get_parser():
     )
     parser.add_argument(
         '--ffligand', type=str, default='gaff',
-        help = 'Force fields to generate parameters for, specified as a\n'
-        'comma-separated string without spaces:\n'
+        help = 'Force fields to generate parameters for, specified\n'
+        'as a comma-separated string without spaces:\n'
         + ', '.join(ffligandsString)
     )
     parser.add_argument(
@@ -261,13 +261,13 @@ def get_parser():
     )
     parser.add_argument(
         '-k', '--keep_ligand_name', action='store_true',
-        help = 'Do not rename the ligand in the output files. \n'
-        'When doing e.g. solvation or binding free energy \n'
-        'it is convenient to always call the ligand the \n'
-        'same thing - in this case "LIG". If this option \n'
-        'is set the ligand name will not be changed to "LIG". \n'
-        'If you need to assign parameters to e.g. co-factors \n'
-        'it is good to keep their names to tell them apart \n'
+        help = 'Do not rename the ligand in the output files.\n'
+        'When doing e.g. solvation or binding free energy\n'
+        'it is convenient to always call the ligand the\n'
+        'same thing - in this case "LIG". If this option\n'
+        'is set the ligand name will not be changed to "LIG".\n'
+        'If you need to assign parameters to e.g. co-factors\n'
+        'it is good to keep their names to tell them apart\n'
         'from ligands.'
     )
     parser.add_argument(

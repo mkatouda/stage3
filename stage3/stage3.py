@@ -127,6 +127,7 @@ from glob import glob
 
 import yaml
 
+from .config import ffligandsString, standardChargeMethods, chargeMethodsHelp, waterModels, boxTypes
 from .ForceFieldPlugin import ForceFieldPlugin
 from .GaffForceFieldPlugin import GaffForceFieldPlugin
 from .CgenffForceFieldPlugin import CgenffForceFieldPlugin
@@ -137,21 +138,6 @@ from .GaussianChargePlugin import GaussianChargePlugin
 from .util import babelConvert, renameAtoms, mol2RenameToLig, getNetChargeOfMol2, makeRestraintsRun, getChargeOfTopology
 from .util import generateCharges, calibrateVdW, mergeCoordinateFiles, copyItp, modproteinItp, splitTopologyToItp, mergeTopologyFiles
 from .util import hydrogens2VirtualSites, generateLinearVirtualSites, solvateSystem, neutraliseSystem, makeIndexRun, convertGmx2Amb
-
-
-forcefieldsString = ['gaff', 'gaff2', 'cgenff']
-standardChargeMethods = ['am1bcc', 'am1bcc-pol', 'mmff94', 'eem', 'qeq', 'qtpie']
-standardChargeMethodsHelp = ['am1bcc: AM1 with bond charge correction (antechamber)',
-                     'am1bcc-pol: STaGE\'s own more polarized bond charge correction (antechamber)',
-                     'mmff94: MMFF94 (Open Babel)',
-                     'eem: electronegativity equalization method (Open Babel)',
-                     'qeq: Assign QEq (charge equilibration) partial charges (Rappe and Goddard, 1991) (Open Babel)',
-                     'qtpie: Assign QTPIE (charge transfer, polarization and equilibration) partial charges (Chen and Martinez, 2007) (Open Babel)']
-extraChargeMethods = ['gaussian/hf']
-extraChargeMethodsHelp = ['gaussian/hf: Hatree-Fock/6-31G(d) basis set followed by RESP (Gaussian)']
-                          #'gamess/hf: Hatree-Fock/6-31G(d) basis set followed by RESP (GAMESS)',
-ChargeMethods = standardChargeMethods + extraChargeMethods
-ChargeMethodsHelp = standardChargeMethodsHelp + extraChargeMethodsHelp
 
 
 def _loadPlugins(path, name, baseclass):
@@ -232,13 +218,13 @@ def get_parser():
         #formatter_class=argparse.ArgumentDefaultsHelpFormatter,
         #formatter_class=argparse.RawTextHelpFormatter,
         formatter_class=customHelpFormatter,
-        description='STaGE is a tool for generating GROMACS topologies '
-        'of small molecules for different force fields (currently GAFF, OPLS-AA '
-        'and CGenFF). It uses many external programs to perform its tasks, '
-        'so make sure you read the documentation to properly cite the programs if '
-        'you use STaGE in a publication and also cite: '
-        'Lundborg M., Lindahl E. Automatic GROMACS Topology Generation and Comparisons '
-        'of Force Fields for Solvation Free Energy Calculations. J. Phys. Chem. B. 2014, '
+        description='STaGE is a tool for generating GROMACS topologies\n'
+        'of small molecules for different force fields (currently GAFF, GAFF2,\n'
+        'and CGenFF). It uses many external programs to perform its tasks,\n'
+        'so make sure you read the documentation to properly cite the programs if\n'
+        'you use STaGE in a publication and also cite:\n'
+        'Lundborg M., Lindahl E. Automatic GROMACS Topology Generation and Comparisons\n'
+        'of Force Fields for Solvation Free Energy Calculations. J. Phys. Chem. B. 2014,\n'
         'DOI: 10.1021/jp505332p'
     )
     parser.add_argument(
@@ -251,7 +237,7 @@ def get_parser():
     )
     parser.add_argument(
         '-s', '--smiles', type=str,
-        help = 'Use the specified smiles string as input '
+        help = 'Use the specified smiles string as input\n'
         'instead of an input file (must be inside quotes).'
     )
     parser.add_argument(
@@ -260,16 +246,17 @@ def get_parser():
     )
     parser.add_argument(
         '--ffligand', type=str, default='gaff',
-        help = 'Force fields to generate parameters for, specified as a '
-        'comma-separated string without spaces.' + ','.join(forcefieldsString)
+        help = 'Force fields to generate parameters for, specified as a\n'
+        'comma-separated string without spaces:\n'
+        + ', '.join(ffligandsString)
     )
     parser.add_argument(
-        '--ffprotein',
+        '--ffprotein', type=str,
         help = 'Force field of protein.'
     )
     parser.add_argument(
-        '-x', '--calibration',
-        help = 'Modify van der Waals parameters according to specified '
+        '-x', '--calibration', type=str,
+        help = 'Modify van der Waals parameters according to specified\n'
         'calibration file.'
     )
     parser.add_argument(
@@ -284,9 +271,9 @@ def get_parser():
         'from ligands.'
     )
     parser.add_argument(
-        '-p', '--ph',
-        help = 'Protonate the molecule according to this pH (float). '
-        'This does not always give correct results. It is safer '
+        '-p', '--ph', type=float,
+        help = 'Protonate the molecule according to this pH (float).\n'
+        'This does not always give correct results. It is safer\n'
         'to provide correctly protonated input files.'
     )
     #parser.add_argument(
@@ -300,54 +287,51 @@ def get_parser():
     )
     parser.add_argument(
         '-q', '--charge_method', type=str, default='am1bcc',
-        help = 'Use the specified charge method for all force fields.'
-        + '\n'.join(ChargeMethodsHelp) + '\n'
+        help = 'Use the specified charge method for all force fields:\n'
+        + '\n'.join(chargeMethodsHelp) + '\n'
     )
     parser.add_argument(
         '-f', '--charge_multiplier', type=float, default=1.0,
-        help = 'Multiply partial charges with this factor. Can only be used '
+        help = 'Multiply partial charges with this factor. Can only be used\n'
         'in combination with --charge_method.'
     )
     parser.add_argument(
-        '-c', '--mergecoordinates',
-        help = 'Merge the created coordinates file (.gro) with an '
+        '-c', '--mergecoordinates', type=str,
+        help = 'Merge the created coordinates file (.gro) with an\n'
         'already existing coordinate file (.pdb or .gro), '
         'e.g. for combining \n'
-        'ligand coordinates with protein coordinates. The generated topology \n'
-        'will contain both the ligand and the protein. If a .gro file of the \n'
-        'protein is provided and there exists a corresponding .top file that \n'
-        'toplogy file will be used for the protein, otherwise a new topology \n'
+        'ligand coordinates with protein coordinates. The generated topology\n'
+        'will contain both the ligand and the protein. If a .gro file of the\n'
+        'protein is provided and there exists a corresponding .top file that\n'
+        'toplogy file will be used for the protein, otherwise a new topology\n'
         'file is generated.'
     )
     parser.add_argument(
         '-t', '--mergetopology',
-        help = 'Merge the created topology file (.top) with an '
-        'already existing topology file. '
-        'Must be used in combination with --mergecoordinates '
+        help = 'Merge the created topology file (.top) with an\n'
+        'already existing topology file.\n'
+        'Must be used in combination with --mergecoordinates\n'
         'with a .gro file of the protein.'
     )
     parser.add_argument(
         '-b', '--box_type', type=str, default='dodecahedron',
-        help = 'Buffer from the solute to the edge of the '
-        'dodecahedron shaped solvent box. Set to 0 '
-        'to disable solvation (and ionisation).\n'
-        'Default: dodecahedron'
+        help = 'Type of simulation box: ' 
+        + ', '.join(boxTypes)
     )
     parser.add_argument(
         '-d', '--box_buffer', type=float, default=1.0,
-        help = 'Buffer from the solute to the edge of the '
-        'solvent box. Set to 0 '
-        'to disable solvation (and ionisation).\n'
+        help = 'Buffer from the solute to the edge of the\n'
+        'solvent box. Set to 0 to disable solvation (and ionisation).'
     )
     parser.add_argument(
-        '-w', '--water',
-        help = 'Solvent model to use in topology files. If not '
-        'specified the solvent will not be specified in '
-        'the topology. Suggested water models are: '
-        '"opc", "spce", "tip4pew", "spc" or "tip3p".'
+        '-w', '--water', type=str,
+        help = 'Solvent model to use in topology files. If not \n'
+        'specified the solvent will not be specified in \n'
+        'the topology. Suggested water models are: \n'
+        + ', '.join(waterModels)
     )
     parser.add_argument(
-        '--conc', type=str, default=0.0,
+        '--conc', type=float, default=0.0,
         help = 'Specify salt concentration (mol/liter).'
     )
     parser.add_argument(
@@ -435,7 +419,7 @@ def stage3_run(ligand, smiles, output, ffligand, ffprotein, calibration,
 
     converters = []
     for forcefield in forcefields:
-        if forcefield not in forcefieldsString:
+        if forcefield not in ffligandsString:
             print('Force field %s is not available.' % forcefield)
             sys.exit(1)
         elif 'gaff' in forcefield:

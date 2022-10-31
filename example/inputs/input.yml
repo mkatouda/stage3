@@ -1,0 +1,13 @@
+ligand: './inputs/jz4.mol'
+mergecoordinates: './inputs/3HTB_protein.pdb'
+output: '3HTB-jz4-wat'
+ffligand: 'gaff2'
+ffpritein: 'amber99sb-ildn'
+charge_method: 'am1bcc'
+water: 'tip3p'
+box_type: 'dodecahedron'
+box_buff: 1.0
+conc: 0.15
+pname: 'NA'
+nname: 'CL'
+verbose: True

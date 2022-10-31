@@ -7,6 +7,7 @@ If you use STaGE3, please cite original paper: Lundborg M., Lindahl E. Automatic
 and Comparisons of Force Fields for Solvation Free Energy Calculations. J. Phys. Chem. B. 2014, DOI: 10.1021/jp505332p
 
 ## Licence
+
 GNU GPLv3
 
 ## Required software
@@ -27,53 +28,57 @@ STaGE3 also depends on a number of other softwares, some of which can should be 
 ## Installation (Required)
 
 - Create conda virtual environment  
-<pre>
+
+```
 conda create -n py38-stage3 python=3.8  
 conda activate py38-stage3  
-</pre>
+```
 
 - Run the following command to install required conda packages  
-<pre>
+
+```
 conda install -c conda-forge numpy ambertools acpype openbabel gromacs  
-</pre>
+```
 
 - Install STaGE3 from github  
-<pre>
+
+```
 pip install git+https://github.com/mkatouda/stage3.git
-</pre>
+```
 
 - Install STaGE3 from local repository  
-<pre>
+
+```
 git clone https://github.com/mkatouda/stage3.git
 cd stage3
 pip install .
-</pre>
+```
 
 ## Installation (Optional)
 
 - Resiter and download MATCH program from offical web cite and extract archive file
-<pre>
+
+```
 tar xzvf MATCH_RELEASE.tar.gz
-</pre>
+```
 
 - Set up enviroment variables for MATCH
-<pre>
+
+```
 export PerlChemistry=/path/to/MATCH_RELEASE/PerlChemistry
 export MATCH=${HOME}/path/to/MATCH_RELEASE/MATCH
 export PATH=${PATH}:${MATCH}/scripts
-</pre>
+```
 
 ## Command usage
 
-<pre>
+```
 usage: stage3 [-h] [-i INP] [-l LIGAND] [-s SMILES] [-o OUTPUT] [--ffligand FFLIGAND]  
               [--ffprotein FFPROTEIN] [-x CALIBRATION] [-k] [-p PH] [-r]  
               [-q CHARGE_METHOD] [-f CHARGE_MULTIPLIER] [-c MERGECOORDINATES]  
               [-t MERGETOPOLOGY] [-b BOX_TYPE] [-d BOX_BUFFER] [-w WATER]  
               [--conc CONC] [--pname PNAME] [--nname NNAME] [-v]
-</pre>
 
-<pre>
 optional arguments:  
   -h, --help            show this help message and exit  
   -i INP, --inp INP     yaml style input file, overwriting argument values (default: None)  
@@ -146,8 +151,7 @@ optional arguments:
   --pname PNAME         Name of the positive counter ion in Solvent. (default: NA)  
   --nname NNAME         Name of the negative counter ion in Solvent. (default: CL)  
   -v, --verbose         Verbose output. (default: False)  
-
-</pre>
+```
 
 ## Exmaples of command line usage
 
@@ -155,17 +159,17 @@ optional arguments:
 
 Generates MD input files for ethanol using mol file as input for all available force fields using the default charge methods.  
 
-<pre>
+```
 stage3 -l ethanol.mol -o ethanol
-</pre>
+```
 
 ### Simple small molecule given user determied partial charges
 
 Generates MD input files for ethanol using a mol2 file as input and retaining all the partial charges that were specified in the mol2 file.  
 
-<pre>
+```
 stage3 -i ethanol.mol2 -o ethanol -r
-</pre>
+```
 
 ### Small molecule with HF/6-31G* charge in water
 
@@ -173,9 +177,9 @@ Generates MD input files for water solvated ethanol using mol file as input.
 GAFF with Hatree-Fock 6-31G* charge method, which runs Gaussian to calculate the charges and can take a long time, is used.  
 Mininum distance of 1.2 nm from the solute to the edge of the dodecahedron periodic box. TIP3P water model is used.  
 
-<pre>
+```
 stage3 -l ethanol.mol -o ethanol_solvated --ffligand gaff -q gaussian/hf -w tip3p -b dodecahedron -d 1.2
-</pre>
+```
 
 ### Protein-ligand binding system
 
@@ -184,10 +188,10 @@ GAFF2 with AM1-BCC charge method and AMBER99SB-ILDN force fields are used for li
 Mininum distance of 1.0 nm from the solute to the edge of the cubic periodic box.  
 TIP3P water model is used and the system is neutralized adding charged counter ions (K+) or (Cl-).  
 
-<pre>
+```
 stage3 -l ligand.mol -c protein.pdb -o protein_ligand_solvated --ffligand gaff2 -q am1bcc --ffprotein charmm27 \
        -w tip3p -b cubic -d 1.0 --pname K --nname CL
-</pre>
+```
 
 ## Exmaples of yaml input usage
 
@@ -199,7 +203,7 @@ Mininum distance of 1.0 nm from the solute to the edge of the cubic periodic box
 
 Prepare input yaml file input.yml:
 
-<pre>
+```
 ligand: './jz4.mol'
 mergecoordinates: './3HTB_protein.pdb'
 output: '3HTB-jz4-wat'
@@ -213,16 +217,17 @@ conc: 0.1
 pname: 'NA'
 nname: 'CL'
 verbose: True
-</pre>
+```
 
 Then, run stage3 in command line:
 
-<pre>
+```
 stage3 -i input.yml
-</pre>
+```
 
 Keywards of yaml file are the same in the name of command line options.  
 See above explanation of command line options.  
 
 ## Author
+
 Michio Katouda (katouda@rist.or.jp)  

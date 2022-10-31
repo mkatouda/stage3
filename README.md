@@ -1,8 +1,10 @@
 # STaGE3 (Small molecule Topology GEnerator for python 3) 
 
-STaGE3 is the automatic GROMACS Topology Generation tool of small organic molecules using the GAFF and CGenFF force fields with receptor system such as proteins or macro molecules.  
+STaGE3 is the automatic GROMACS Topology Generation tool of small organic molecules using the GAFF and CGenFF 
+force fields with receptor system such as proteins or macro molecules.  
 STaGE3 is the python 3 fork of STaGE (https://gitlab.com/gromacs/stage) with some update improving usability.    
-If you use STaGE3, please cite original paper: Lundborg M., Lindahl E. Automatic GROMACS TopologyGeneration and Comparisons of Force Fields for Solvation Free Energy Calculations. J. Phys. Chem. B. 2014, DOI: 10.1021/jp505332p
+If you use STaGE3, please cite original paper: Lundborg M., Lindahl E. Automatic GROMACS TopologyGeneration 
+and Comparisons of Force Fields for Solvation Free Energy Calculations. J. Phys. Chem. B. 2014, DOI: 10.1021/jp505332p
 
 ## Licence
 GNU GPLv3
@@ -11,8 +13,8 @@ GNU GPLv3
 
 STaGE3 also depends on a number of other softwares, some of which can should be installed seperately. They are:  
 
-- Required  
-1. Antechamber (part of Ambertools, available after filling in form at http://ambermd.org/AmberTools-get.html )  
+- Required
+1. AmberTools (https://ambermd.org/AmberTools.php )  
 2. acpype (https://alanwilter.github.io/acpype/)
 3. openbabel (http://openbabel.org/wiki/Main_Page)  
 4. gromacs (https://www.gromacs.org/) 
@@ -220,7 +222,7 @@ stage3 -i input.yml
 </pre>
 
 Keywards of yaml file are the same in the name of command line options.  
-See above explation of command line options.  
+See above explanation of command line options.  
 
 ## Author
 Michio Katouda (katouda@rist.or.jp)  

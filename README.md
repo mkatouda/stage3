@@ -10,6 +10,11 @@ and Comparisons of Force Fields for Solvation Free Energy Calculations. J. Phys.
 
 GNU GPLv3
 
+## Tutorial
+
+You can try tutorial of STaGE3 to know how to install and run:
+https://colab.research.google.com/github/mkatouda/stage3/blob/main/stage3_tutorial_jp.ipynb
+
 ## Required software
 
 STaGE3 also depends on a number of other softwares, some of which can should be installed seperately. They are:  

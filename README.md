@@ -12,7 +12,7 @@ GNU GPLv3
 
 ## Tutorial
 
-You can try tutorial of STaGE3 to know how to install and run:
+You can try tutorial of STaGE3 to know how to install and run:  
 https://colab.research.google.com/github/mkatouda/stage3/blob/main/stage3_tutorial_jp.ipynb
 
 ## Required software
